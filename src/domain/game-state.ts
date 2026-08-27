@@ -1,6 +1,12 @@
 import { BALANCE_VERSION, type UpgradeBranchId } from '../content/economy-content';
 import { createEmptyBranchLevels, type BranchLevels } from './economy-formulas';
 
+export interface EventProgressState {
+  breadRushBestScore: number;
+  breadRushRuns: number;
+  breadRushCooldownSeconds: number;
+}
+
 export interface GameState {
   schemaVersion: 1;
   balanceVersion: string;
@@ -12,6 +18,7 @@ export interface GameState {
   lastSavedAt: number;
   discoveredGrowthStages: number[];
   appliedRewardIds: string[];
+  events: EventProgressState;
 }
 
 export function createNewGameState(now = Date.now()): GameState {
@@ -26,6 +33,11 @@ export function createNewGameState(now = Date.now()): GameState {
     lastSavedAt: now,
     discoveredGrowthStages: [0],
     appliedRewardIds: [],
+    events: {
+      breadRushBestScore: 0,
+      breadRushRuns: 0,
+      breadRushCooldownSeconds: 0,
+    },
   };
 }
 
@@ -35,6 +47,7 @@ export function cloneState(state: GameState): GameState {
     branchLevels: { ...state.branchLevels },
     discoveredGrowthStages: [...state.discoveredGrowthStages],
     appliedRewardIds: [...state.appliedRewardIds],
+    events: { ...state.events },
   };
 }
 
