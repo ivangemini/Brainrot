@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Adopt — Brownfield Template Adoption
 
 This skill audits an existing project's artifacts for **format compliance** with
@@ -376,7 +380,7 @@ After writing the adoption plan (or if the user cancels writing), check whether
   - `Lean (recommended)` — Directors only at phase gate transitions (/gate-check). Skips per-skill reviews. Balanced for solo devs and small teams.
   - `Solo` — No director reviews at all. Maximum speed. Best for game jams, prototypes, or if reviews feel like overhead.
 
-Write the choice to `production/review-mode.txt` immediately after selection — no separate "May I write?" needed:
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - `Full` → write `full`
 - `Lean (recommended)` → write `lean`
 - `Solo` → write `solo`

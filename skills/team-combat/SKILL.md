@@ -4,6 +4,10 @@ description: "Orchestrate the combat team: coordinates game-designer, gameplay-p
 argument-hint: "[combat feature description] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 **Argument check:** If no combat feature description is provided, output:
 > "Usage: `/team-combat [combat feature description]` — Provide a description of the combat feature to design and implement (e.g., `melee parry system`, `ranged weapon spread`)."
 Then stop immediately without spawning any role profiles or reading any files.
@@ -125,7 +129,7 @@ Common blockers:
 
 All file writes (design documents, implementation files, test cases) are
 delegated to role profiles spawned by activating the relevant role profile. Each role profile enforces the
-"May I write to [path]?" protocol. This orchestrator does not write files directly.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 ## Output
 

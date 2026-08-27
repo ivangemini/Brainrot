@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Create Epics
 
 An epic is a named, bounded body of work that maps to one architectural module.
@@ -155,7 +159,7 @@ Do not write epic files until the producer gate resolves.
 
 ## 5. Write Epic Files
 
-After approval, ask: "May I write the epic file to `production/epics/[epic-slug]/EPIC.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 After user confirms, write:
 

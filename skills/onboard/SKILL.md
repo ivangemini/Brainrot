@@ -5,6 +5,10 @@ argument-hint: "[role|area]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 1: Load Project Context
 
 Read AGENTS.md for project overview and standards.
@@ -79,7 +83,7 @@ Read recent changes (git log if available) to understand current momentum.
 
 Present the onboarding document to the user.
 
-Ask: "May I write this to `production/onboarding/onboard-[role]-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the file, creating the directory if needed.
 

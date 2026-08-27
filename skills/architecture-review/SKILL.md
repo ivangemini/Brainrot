@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Architecture Review
 
 The architecture review validates that the complete body of architectural decisions
@@ -463,7 +467,7 @@ Use `user-decision checkpoint` for the write approval:
 ### RTM Output (rtm mode only)
 
 For `rtm` mode, use `user-decision checkpoint`:
-- "May I write the full Requirements Traceability Matrix?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
   - [A] Yes — write to `docs/architecture/requirements-traceability.md`
   - [B] Not yet — show me the full RTM data first, then ask again
 

@@ -4,6 +4,10 @@ description: "Orchestrate the polish team: coordinates performance-analyst, tech
 argument-hint: "[feature or area to polish] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 If no argument is provided, output usage guidance and exit without spawning any agents:
 > Usage: `/team-polish [feature or area]` — specify the feature or area to polish (e.g., `combat`, `main menu`, `inventory system`, `level-1`). Do not use `user-decision checkpoint` here; output the guidance directly.
 
@@ -124,7 +128,7 @@ Common blockers:
 ## File Write Protocol
 
 All file writes (performance reports, test results, evidence docs) are delegated to
-role profiles spawned by activating the relevant role profile. Each role profile enforces the "May I write to [path]?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 protocol. This orchestrator does not write files directly.
 
 ## Output

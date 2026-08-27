@@ -1,3 +1,6 @@
+> **Single-agent Codex interpretation**
+> Any director/lead/specialist delegation described here is role routing performed by one Codex/ChatGPT executor. `AGENTS.md` controls autonomy and decision gates.
+
 # Codex Game Studio Framework -- Complete Workflow Guide
 
 > **How to go from zero to a shipped game using the Agent Architecture.**
@@ -1190,7 +1193,7 @@ Every agent interaction follows this pattern:
 3. You decide
 4. Agent drafts based on your decision
 5. You review and refine
-6. Agent asks "May I write this to [filepath]?" before writing
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for the full protocol with
 examples.

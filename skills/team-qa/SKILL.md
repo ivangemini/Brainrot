@@ -6,6 +6,10 @@ user-invocable: true
 agent: qa-lead
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked, orchestrate the QA team through a structured testing cycle.
 
 **Decision Points:** At each phase transition, use `user-decision checkpoint` to present
@@ -105,7 +109,7 @@ The test plan should cover:
 - **Entry Criteria**: what must be true before QA can begin. Always include: (1) Smoke check PASS or PASS WITH WARNINGS report exists at `production/qa/smoke-*.md`, (2) build is stable (no crashes on launch), (3) all Must Have stories have Status: in-progress or done in `production/sprint-status.yaml`. Add any sprint-specific criteria beyond these.
 - **Exit Criteria**: what constitutes a completed QA cycle (all stories PASS or FAIL with bugs filed)
 
-Ask: "May I write the QA plan to `production/qa/qa-plan-[sprint]-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write only after receiving approval.
 
@@ -204,7 +208,7 @@ Next step guidance by verdict:
 - APPROVED WITH CONDITIONS: "Resolve conditions before advancing. S3/S4 bugs may be deferred to polish."
 - NOT APPROVED: "Resolve S1/S2 bugs and re-run `/team-qa` or targeted manual QA before advancing."
 
-Ask: "May I write this QA sign-off report to `production/qa/qa-signoff-[sprint]-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write only after receiving approval.
 

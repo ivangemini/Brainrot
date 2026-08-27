@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Create Control Manifest
 
 The Control Manifest is a flat, actionable rules sheet for programmers. It
@@ -148,7 +152,7 @@ Apply the verdict:
 ## 5. Write the Control Manifest
 
 Use `user-decision checkpoint`:
-- Prompt: "May I write the Control Manifest?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - Options:
   - `[A] Yes — write to docs/architecture/control-manifest.md`
   - `[B] Show me the full draft first, then ask again`

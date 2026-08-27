@@ -5,6 +5,10 @@ argument-hint: "[sprint | quick | --platform pc|console|mobile|all]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Smoke Check
 
 This skill is the gate between "implementation done" and "ready for QA
@@ -370,7 +374,7 @@ Any platform with one or more FAIL checks contributes to the overall FAIL verdic
 
 Present the full report in conversation, then ask:
 
-"May I write this smoke check report to `production/qa/smoke-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write only after approval.
 

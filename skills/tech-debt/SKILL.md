@@ -5,6 +5,10 @@ argument-hint: "[scan|add|prioritize|report]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 1: Parse Subcommand
 
 Determine the mode from the argument:
@@ -41,7 +45,7 @@ Categorize each finding:
 
 Present the findings to the user.
 
-Ask: "May I write these findings to `docs/tech-debt-register.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, update the register (append new entries, do not overwrite existing ones). Verdict: **COMPLETE** — scan findings written to register.
 
@@ -91,7 +95,7 @@ Re-sort the register by priority score and recommend which items to include in t
 
 Present the re-prioritized register to the user.
 
-Ask: "May I write the re-prioritized register back to `docs/tech-debt-register.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the updated file. Verdict: **COMPLETE** — register re-prioritized and saved.
 

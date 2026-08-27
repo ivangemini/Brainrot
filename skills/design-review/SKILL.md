@@ -5,6 +5,10 @@ argument-hint: "[path-to-design-doc] [--depth full|lean|solo]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 0: Parse Arguments
 
 Extract `--depth [full|lean|solo]` if present. Default is `full` when no flag is given.

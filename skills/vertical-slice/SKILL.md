@@ -7,6 +7,10 @@ agent: prototyper
 isolation: worktree
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Purpose
 
 The **vertical slice** answers a different question from the concept prototype:
@@ -242,7 +246,7 @@ text with real observations.
 - What would we change about the slice scope if we ran this again?
 ```
 
-Ask: "May I write this report to
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 `prototypes/[concept-name]-vertical-slice/REPORT.md`?"
 
 If yes, write the file. Then update `prototypes/index.md` (create if it does not
@@ -299,7 +303,7 @@ two questions (plain text, one at a time):
 1. "What systems or mechanics worked at this quality level and should be preserved in the revised design?"
 2. "What specifically failed — the core loop, the architecture, the pipeline, or the fun?"
 
-Ask: "May I write this to `prototypes/[concept-name]-vertical-slice/PIVOT-NOTE.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the file with: what worked, what failed, the specific systems or
 architecture decisions that need revision, and what the next slice should prove

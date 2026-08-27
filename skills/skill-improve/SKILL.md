@@ -5,6 +5,10 @@ argument-hint: "[skill-name]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Skill Improve
 
 Runs an improvement loop on a single skill:
@@ -36,7 +40,7 @@ Run `/skill-test static [name]` and record the baseline score:
 Display to the user:
 ```
 Static baseline:   [N] failures, [M] warnings
-Failing: Check 4 (no ask-before-write), Check 5 (no handoff)
+Failing: Check 4 (no autonomy-policy), Check 5 (no handoff)
 ```
 
 If baseline is 0 FAILs and 0 WARNs, note it and proceed to Phase 2b.
@@ -73,7 +77,7 @@ For each failing or warning **static** check, identify the exact gap:
 - **Check 1 fail** → which frontmatter field is missing
 - **Check 2 fail** → how many phases found vs. minimum required
 - **Check 3 fail** → no verdict keywords anywhere in the skill body
-- **Check 4 fail** → Write or Edit in allowed-tools but no ask-before-write language
+- **Check 4 fail** → Write or Edit in allowed-tools but no autonomy-policy language
 - **Check 5 warn** → no follow-up or next-step section at the end
 - **Check 6 warn** → `context: fork` set but fewer than 5 phases found
 - **Check 7 warn** → argument-hint is empty or doesn't match documented modes
@@ -96,7 +100,7 @@ Write a targeted fix for each failure and warning. Show the proposed changes
 as clearly marked before/after blocks. Only change what is failing — do not
 rewrite sections that are passing.
 
-Ask: "May I write this improved version to `skills/[name]/SKILL.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If the user says no, stop here.
 

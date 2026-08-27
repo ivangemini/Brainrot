@@ -4,6 +4,10 @@ description: "Orchestrate the UI team through the full UX pipeline: from UX spec
 argument-hint: "[UI feature description] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 When this skill is invoked, orchestrate the UI team through a structured pipeline.
 
 **Decision Points:** At each phase transition, use `user-decision checkpoint` to present
@@ -168,7 +172,7 @@ Common blockers:
 
 All file writes (UX specs, interaction pattern library updates, implementation files) are
 delegated to role profiles and sub-skills (`/ux-design`, `ui-programmer`). Each enforces the
-"May I write to [path]?" protocol. This orchestrator does not write files directly.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 ## Output
 

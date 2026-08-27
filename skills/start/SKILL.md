@@ -5,6 +5,10 @@ argument-hint: "[no arguments]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Guided Onboarding
 
 This skill writes one file: `production/review-mode.txt` (review mode config set in Phase 3b).
@@ -175,7 +179,7 @@ Stage mapping:
 - **Path D, existing project with GDDs but no architecture documents**: write `Systems Design`
 - **Path D, existing project with full architecture (ADRs, architecture doc)**: write `Technical Setup`
 
-Do this silently — no "May I write?" needed for this single-line file.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Say: "I've set `production/stage.txt` to `[stage]` — this anchors your status line and stage detection."
 
@@ -196,7 +200,7 @@ Check if `production/review-mode.txt` already exists.
   - `Solo` — No director reviews at all. Maximum speed. Best for game jams, prototypes, or if the reviews feel like overhead.
 
 Write the choice to `production/review-mode.txt` immediately after the user
-selects — no separate "May I write?" needed, as the write is a direct
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 consequence of the selection:
 - `Full` → write `full`
 - `Lean (recommended)` → write `lean`

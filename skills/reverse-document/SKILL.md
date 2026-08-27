@@ -6,6 +6,10 @@ user-invocable: true
 # Read-only diagnostic skill — no specialist agent delegation needed
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Reverse Documentation
 
 This skill analyzes existing implementation (code, prototypes, systems) and generates
@@ -148,10 +152,10 @@ SECTIONS MARKED AS INCOMPLETE:
 - "[System] interaction with [other-system]" (not fully implemented yet)
 - "[Variant or feature]" (only [subset] implemented so far)
 
-May I write this to design/gdd/[system-name].md?
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 ```
 
-Wait for approval. User may request changes before writing.
+- Continue autonomously for routine reversible work; reserve user confirmation for material decisions defined by `AGENTS.md`.
 
 ## Phase 7: Write Document with Metadata
 
@@ -229,7 +233,7 @@ User: 1. [Resource] is for pacing, prevent [unwanted behavior]
 Agent: Perfect, that clarifies the vision. Let me draft the design doc.
        [Shows draft with clarified intent]
 
-       May I write this to design/gdd/[system-name].md?
+       - Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 User: Yes, write it.
 
@@ -255,7 +259,7 @@ This skill follows the collaborative design principle:
 4. **User Clarifies**: Separate intent from accidents
 5. **Draft Document**: Create doc based on reality + intent
 6. **Show Draft**: Display key sections, explain additions
-7. **Get Approval**: "May I write to [filepath]?" On approval: Verdict: **COMPLETE** — document generated. On decline: Verdict: **BLOCKED** — user declined write.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 8. **Flag Follow-Up**: Suggest related work, don't auto-execute
 
 **Never assume intent. Always ask before documenting "why".**

@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Create Architecture
 
 This skill produces `docs/architecture/architecture.md` — the master architecture
@@ -290,7 +294,7 @@ Once all sections are approved, write the complete document to
 `docs/architecture/architecture.md`.
 
 Display a one-paragraph summary of what the document will contain (layers, modules, data flows, ADR gaps). Then use `user-decision checkpoint`:
-- "All sections approved. May I write the master architecture document?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
   - [A] Yes — write to `docs/architecture/architecture.md` now
   - [B] Show me the full draft inline first, then ask again
   - [C] Not yet — I have more changes to discuss

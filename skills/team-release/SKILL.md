@@ -4,6 +4,10 @@ description: "Orchestrate the release team: coordinates release-manager, qa-lead
 argument-hint: "[version number or 'next'] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 **Argument check:** If no version number is provided:
 1. Read `production/session-state/active.md` and the most recent file in `production/milestones/` (if they exist) to infer the target version.
 2. If a version is found: report "No version argument provided — inferred [version] from milestone data. Proceeding." Then confirm with `user-decision checkpoint`: "Releasing [version]. Is this correct?"
@@ -149,7 +153,7 @@ Common blockers:
 ## File Write Protocol
 
 All file writes (release checklists, changelogs, patch notes, deployment scripts) are
-delegated to role profiles and sub-skills. Each enforces the "May I write to [path]?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 protocol. This orchestrator does not write files directly.
 
 ## Output

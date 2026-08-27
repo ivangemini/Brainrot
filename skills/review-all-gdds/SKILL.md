@@ -5,6 +5,10 @@ argument-hint: "[focus: full | consistency | design-theory | since-last-review]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Review All GDDs
 
 This skill reads every system GDD simultaneously and performs two complementary
@@ -551,7 +555,7 @@ FAIL: One or more blocking issues must be resolved before architecture begins.
 ## Phase 6: Write Report and Flag GDDs
 
 Use `user-decision checkpoint` for write permission:
-- Prompt: "May I write this review to `design/gdd/gdd-cross-review-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - Options: `[A] Yes — write the report` / `[B] No — skip`
 
 If any GDDs are flagged for revision, use a second `user-decision checkpoint`:

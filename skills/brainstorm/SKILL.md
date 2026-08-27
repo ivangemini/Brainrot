@@ -5,6 +5,10 @@ argument-hint: "[genre or theme hint, or 'open'] [--review full|lean|solo]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked:
 
 1. **Parse the argument** for an optional genre/theme hint (e.g., `roguelike`,
@@ -292,7 +296,7 @@ Present the assessment to the user. If UNREALISTIC, offer to adjust the MVP defi
    move" decision before it can be forgotten between sessions.
 
 5. Use `user-decision checkpoint` for write approval:
-- Prompt: "Game concept is ready. May I write it to `design/gdd/game-concept.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - Options: `[A] Yes — write it` / `[B] Not yet — revise a section first`
 
 If [B]: ask which section to revise using `user-decision checkpoint` with options: `Elevator Pitch` / `Core Fantasy & Unique Hook` / `Pillars` / `Core Loop` / `MVP Definition` / `Scope Tiers` / `Risks` / `Something else — I'll describe`

@@ -5,6 +5,10 @@ argument-hint: "[target-phase: systems-design | technical-setup | pre-production
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Phase Gate Validation
 
 This skill validates whether the project is ready to advance to the next development
@@ -530,7 +534,7 @@ This skill follows the collaborative design principle:
 2. **Ask about unknowns**: Don't assume PASS for things you can't verify
 3. **Present findings**: Show the full checklist with status
 4. **User decides**: The verdict is a recommendation — the user makes the final call
-5. **Get approval**: "May I write this gate check report to production/gate-checks/?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 6. **Never auto-fix**: If required artifacts are missing, report the FAIL verdict and
    name the skill to run (e.g. "run `/test-setup`"). Do NOT create missing files or
    re-run the gate automatically. Creating files to manufacture a PASS defeats the

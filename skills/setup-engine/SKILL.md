@@ -5,6 +5,10 @@ argument-hint: "[engine] | [engine version] | refresh | upgrade [old-version] [n
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked:
 
 ## 1. Parse Arguments
@@ -142,7 +146,7 @@ Record the choice. It determines the AGENTS.md template, naming conventions, spe
 ---
 
 Read `AGENTS.md` and show the user the proposed Technology Stack changes.
-Ask: "May I write these engine settings to `AGENTS.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Wait for confirmation before making any edits.
 
@@ -296,7 +300,7 @@ Present the filled-in preferences to the user. For Godot, include the chosen lan
 
 For all other engines, present the defaults directly without referencing the appendix.
 
-Wait for approval before writing the file.
+- Continue autonomously for routine reversible work; reserve user confirmation for material decisions defined by `AGENTS.md`.
 
 ---
 

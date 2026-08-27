@@ -6,6 +6,10 @@ user-invocable: true
 # Read-only diagnostic skill — no specialist agent delegation needed
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Project Stage Detection
 
 This skill scans your project to determine its current development stage, completeness
@@ -145,7 +149,7 @@ Recommended next steps:
 - [Priority 2]
 - [Priority 3]
 
-May I write the full stage analysis to production/project-stage-report.md?
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 ```
 
 Wait for user approval before creating the file.
@@ -188,6 +192,6 @@ This skill follows the collaborative design principle:
 2. **Present Options**: "Should I create X, or is it tracked elsewhere?"
 3. **User Decides**: Wait for direction
 4. **Show Draft**: Display report summary
-5. **Get Approval**: "May I write to production/project-stage-report.md?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 **Never** silently write files. **Always** show findings and ask before creating artifacts.

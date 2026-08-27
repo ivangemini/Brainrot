@@ -8,6 +8,10 @@ context: |
   !git tag --list --sort=-v:refname 2>/dev/null | head -5
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 1: Parse Arguments
 
 Read the argument for the target version or sprint number. If a version is given, use the corresponding git tag. If a sprint number is given, use the sprint date range.
@@ -143,7 +147,7 @@ Output both changelogs to the user. The internal changelog is the primary workin
 
 After presenting the changelogs, ask the user:
 
-> "May I write this changelog to `docs/CHANGELOG.md`?
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 > [A] Yes, append this entry (recommended if the file already exists)
 > [B] Yes, overwrite the file entirely
 > [C] No — I'll copy it manually"

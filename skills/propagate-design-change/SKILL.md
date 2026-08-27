@@ -6,6 +6,10 @@ user-invocable: true
 agent: technical-director
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Propagate Design Change
 
 When a GDD changes, architectural decisions written against it may no longer be
@@ -203,7 +207,7 @@ Ask: "May I update the traceability index?"
 
 ## 9. Output Change Impact Document
 
-Ask: "May I write the change impact report to `docs/architecture/change-impact-[date]-[system-slug].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 The document contains:
 - The change summary from step 3

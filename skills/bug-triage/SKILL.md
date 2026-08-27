@@ -5,6 +5,10 @@ argument-hint: "[sprint | full | trend]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Bug Triage
 
 This skill processes the open bug backlog into a prioritised, sprint-assigned
@@ -215,7 +219,7 @@ After classifying all bugs, generate trend metrics:
 
 Present the report in conversation, then ask:
 
-"May I write this triage report to `production/qa/bug-triage-[date].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write only after approval.
 

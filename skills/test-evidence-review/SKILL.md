@@ -5,6 +5,10 @@ argument-hint: "[story-path | sprint | system-name]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Test Evidence Review
 
 `/smoke-check` verifies that test files **exist** and **pass**. This skill
@@ -219,7 +223,7 @@ The overall sprint/system verdict is the worst story verdict present.
 
 Present the report in conversation.
 
-Ask: "May I write this test evidence review to
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 `production/qa/evidence-review-[date].md`?"
 
 This is optional — the report is useful standalone. Write only if the user

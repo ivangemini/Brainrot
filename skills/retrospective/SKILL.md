@@ -5,6 +5,10 @@ argument-hint: "[sprint-N|milestone-name]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 1: Parse Arguments
 
 Determine whether this is a sprint retrospective (`sprint-N`) or a milestone retrospective (`milestone-name`).
@@ -189,7 +193,7 @@ the single most important thing to change going forward?]
 
 Present the retrospective and top findings to the user (completion rate, velocity trend, top blocker, most important action item).
 
-Ask: "May I write this to `production/retrospectives/retro-sprint-[N]-[date].md`?" (or `production/retrospectives/retro-[milestone-name]-[date].md` for milestone retrospectives)
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the file, creating the `production/retrospectives/` directory if needed. Verdict: **COMPLETE** — retrospective saved.
 

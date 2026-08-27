@@ -4,6 +4,10 @@ description: "Orchestrate the live-ops team for post-launch content planning: co
 argument-hint: "[season name or event description] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 **Argument check:** If no season name or event description is provided, output:
 > "Usage: `/team-live-ops [season name or event description]` — Provide the name or description of the season or live event to plan."
 Then stop immediately without spawning any role profiles or reading any files.
@@ -142,7 +146,7 @@ If a BLOCKED state is unresolvable, end with Verdict: **BLOCKED** instead of COM
 
 All file writes (season design docs, analytics plans, communication calendars) are
 delegated to role profiles spawned by activating the relevant role profile. Each role profile enforces the
-"May I write to [path]?" protocol. This orchestrator does not write files directly.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 ## Output
 

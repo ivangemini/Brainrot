@@ -5,6 +5,10 @@ argument-hint: "[duration: 30m | 1h | 2h | 4h] [focus: memory | stability | bala
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Soak Test
 
 A soak test (also called an endurance test) is an extended play session run
@@ -253,7 +257,7 @@ Difficulty arc: [appropriate / too easy throughout / difficulty spike at T+N]
 
 Present the protocol summary in conversation, then ask:
 
-"May I write this soak test protocol to
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 `production/qa/soak-test-[date]-[duration].md`?"
 
 Write only after approval.

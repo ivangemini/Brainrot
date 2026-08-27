@@ -7,6 +7,10 @@ agent: prototyper
 isolation: worktree
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Purpose
 
 This is the **concept prototype** — a fast, throwaway build that answers one question:
@@ -398,7 +402,7 @@ Read `studio/docs/templates/prototype-report.md` to get the report structure.
 Fill in every section based on what was observed during this session. Replace all
 placeholder text with real observations — no generic filler.
 
-Ask: "May I write this report to `prototypes/[concept-name]-concept/REPORT.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the file. Then update `prototypes/index.md` (create if it does not
 exist) — append one row to the concept prototype table: concept name, date, path
@@ -456,7 +460,7 @@ two questions (plain text, one at a time):
 1. "What specifically worked in this prototype that we should preserve in the next version?"
 2. "What is the single most important thing to change?"
 
-Ask: "May I write this to `prototypes/[concept-name]-concept/PIVOT-NOTE.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 If yes, write the file with: original hypothesis, what to keep, what to change, and
 the revised hypothesis for the next prototype. When `/prototype` is next run, check

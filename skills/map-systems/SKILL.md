@@ -5,6 +5,10 @@ argument-hint: "[next | system-name] [--review full|lean|solo]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked:
 
 ## Parse Arguments
@@ -231,9 +235,9 @@ Present a summary of the document:
 - First 3 systems in the design order
 - Any high-risk items
 
-Ask: "May I write the systems index to `design/gdd/systems-index.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
-Wait for approval. Write the file only after "yes."
+- Continue autonomously for routine reversible work; reserve user confirmation for material decisions defined by `AGENTS.md`.
 
 **Review mode check** — apply before spawning CD-SYSTEMS:
 - `solo` → skip. Note: "CD-SYSTEMS skipped — Solo mode." Proceed to Phase 7 next steps.
@@ -331,9 +335,9 @@ This skill follows the collaborative design principle at every phase:
    - Phase 2: "Missing systems? Combine or split?"
    - Phase 3: "Dependency ordering correct?"
    - Phase 4: "Priority assignments match your vision?"
-   - Phase 5: "May I write the systems index?"
+   - Proceed with this write when it is within the user-requested scope; do not request per-file approval.
    - Phase 6: "Start designing, pick different, or stop?" then hand off to `/design-system`
-3. **"May I write to [filepath]?"** before every file write
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 4. **Incremental writing**: Update the systems index after each system is designed
 5. **Handoff**: Individual GDD authoring is owned by `/design-system`, which handles
    incremental section writing, cross-referencing, design review, and index updates

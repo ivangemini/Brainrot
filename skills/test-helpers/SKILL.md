@@ -5,6 +5,10 @@ argument-hint: "[system-name | all | scaffold]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Test Helpers
 
 Writing test cases is faster and more consistent when common setup, teardown,
@@ -360,7 +364,7 @@ System helpers ([mode]):
 - tests/helpers/[system]_factory.[ext]  ← from [system] GDD
 ```
 
-Ask: "May I write these helper files to `tests/helpers/`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 **Never overwrite existing files.** If a file already exists, report:
 "Skipping `[path]` — already exists. Remove the file manually if you want it

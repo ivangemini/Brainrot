@@ -6,6 +6,10 @@ user-invocable: true
 agent: lead-programmer
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Create Stories
 
 A story is a single implementable behaviour — small enough to complete in one
@@ -170,7 +174,7 @@ Story 003: [title] — Visual/Feel — ADR-NNNN
 ```
 
 Use `user-decision checkpoint`:
-- Prompt: "May I write these [N] stories to `production/epics/[epic-slug]/`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - Options: `[A] Yes — write all [N] stories` / `[B] Not yet — I want to review or adjust first`
 
 ---

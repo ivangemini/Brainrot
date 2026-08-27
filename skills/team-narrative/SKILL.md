@@ -4,6 +4,10 @@ description: "Orchestrate the narrative team: coordinates narrative-director, wr
 argument-hint: "[narrative content description] [--review full|lean|solo]"
 user-invocable: true
 ---
+
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
 If no argument is provided, output usage guidance and exit without spawning any agents:
 > Usage: `/team-narrative [narrative content description]` — describe the story content, scene, or narrative area to work on (e.g., `boss encounter cutscene`, `faction intro dialogue`, `tutorial narrative`). Do not use `user-decision checkpoint` here; output the guidance directly.
 
@@ -104,7 +108,7 @@ Common blockers:
 ## File Write Protocol
 
 All file writes (narrative docs, dialogue files, lore entries) are delegated to
-role profiles spawned by activating the relevant role profile. Each role profile enforces the "May I write to [path]?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 protocol. This orchestrator does not write files directly.
 
 ## Output

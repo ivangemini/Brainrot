@@ -5,6 +5,10 @@ argument-hint: "[level name or area to design] [--review full|lean|solo]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked:
 
 **Decision Points:** At each step transition, use `user-decision checkpoint` to present
@@ -148,7 +152,7 @@ Spawn the `qa-tester` agent to:
 
 After all role profile outputs are collected, spawn `level-designer` by activating the relevant role profile to compile and write the final document:
 - Pass: all role profile outputs (verbatim), the level brief, game pillars, relevant GDD sections
-- Ask level-designer to: compile into the level design document format, then request user approval before writing ("May I write the compiled level design to design/levels/[level-name].md?")
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 - The orchestrator does NOT call Write directly for the final document.
 
 5. **Save to** `design/levels/[level-name].md` (handled by the level-designer role profile after user approval — see above).
@@ -161,7 +165,7 @@ After all role profile outputs are collected, spawn `level-designer` by activati
 ## File Write Protocol
 
 All file writes (level design docs, narrative docs, test checklists) are delegated
-to role profiles spawned by activating the relevant role profile. Each role profile enforces the "May I write to [path]?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 protocol. This orchestrator does not write files directly.
 
 Verdict: **COMPLETE** — level design document produced and all team outputs compiled.

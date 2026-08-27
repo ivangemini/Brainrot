@@ -5,6 +5,10 @@ argument-hint: "[update | audit | report]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Regression Suite
 
 This skill ensures that every bug fix is backed by a test that would have
@@ -220,7 +224,7 @@ Tests that are flaky or disabled (do not run in CI):
 
 ## 7. Write Output
 
-Ask: "May I write/update `tests/regression-suite.md` with the current
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 regression suite manifest?"
 
 For `update` mode: append new entries; never remove existing entries

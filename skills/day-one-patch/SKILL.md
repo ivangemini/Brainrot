@@ -5,6 +5,10 @@ argument-hint: "[scope: known-bugs | cert-feedback | all]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Day-One Patch
 
 Every shipped game has a day-one patch. Planning it before launch day prevents
@@ -88,7 +92,7 @@ Spawn `release-manager` by activating the relevant role profile. Ask them to pro
 - Who is responsible for triggering the rollback
 - What player communication is required if a rollback occurs
 
-Present the rollback plan. Ask: "May I write this rollback plan to `production/releases/rollback-plan-[version].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Do not proceed to Phase 4 until the rollback plan is written.
 
@@ -191,7 +195,7 @@ See: `production/releases/rollback-plan-[version].md`
 [list player-facing changes in plain language]
 ```
 
-Ask: "May I write this patch record to `production/releases/day-one-patch-[version].md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 ---
 

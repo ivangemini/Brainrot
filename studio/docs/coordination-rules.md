@@ -1,3 +1,6 @@
+> **Single-agent Codex interpretation**
+> Any director/lead/specialist delegation described here is role routing performed by one Codex/ChatGPT executor. `AGENTS.md` controls autonomy and decision gates.
+
 # Agent Coordination Rules
 
 1. **Vertical Delegation**: Leadership agents delegate to department leads, who

@@ -7,6 +7,10 @@ context: |
   !ls production/sprints/ 2>/dev/null
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 ## Phase 0: Parse Arguments
 
 Extract the mode argument (`new`, `update`, or `status`) and resolve the review mode (once, store for all gate spawns this run):
@@ -222,7 +226,7 @@ If [A]: proceed to write approval.
 If [B]: revise the story list, re-present the updated plan, then proceed to write approval.
 If [C]: adjust sprint dates and capacity, re-present the updated plan, then proceed to write approval.
 
-After handling the producer's verdict, ask: "May I write the sprint plan to `production/sprints/sprint-[N].md` and `production/sprint-status.yaml`?" If yes, write both files (creating directories as needed). Verdict: **COMPLETE** — sprint plan and status file created. If no: Verdict: **BLOCKED** — user declined write.
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 After writing, add:
 

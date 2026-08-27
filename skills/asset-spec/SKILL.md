@@ -5,6 +5,10 @@ argument-hint: "[system:<name> | level:<name> | character:<name>] [--review full
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 If no argument is provided, check whether `design/assets/entity-inventory.md` exists:
 - If it exists: read it, find the first entity or screen with status "Needed" but no spec file yet, and use `user-decision checkpoint`:
   - Prompt: "The next unspecced item is **[name]**. Generate specs for it?"
@@ -58,7 +62,7 @@ If [B] or [D]: ask the user to describe additional items. Accept brief descripti
 If [C] or [D]: ask which items to remove and why. Remove them from the list.
 
 ### Step 4 — Write inventory
-After user approval, ask: "May I write the entity inventory to `design/assets/entity-inventory.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write the file:
 
@@ -238,7 +242,7 @@ If [C]: ask what direction to change. Re-spawn the relevant agent with the updat
 
 ## Phase 5: Write Spec File
 
-After approval, ask: "May I write the spec to `design/assets/specs/[target-name]-assets.md`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 
 Write the file with:
 

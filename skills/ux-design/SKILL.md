@@ -6,6 +6,10 @@ user-invocable: true
 agent: ux-designer
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 When this skill is invoked:
 
 ## 1. Parse Arguments & Determine Mode
@@ -422,7 +426,7 @@ Context  ->  Questions  ->  Options  ->  Decision  ->  Draft  ->  Approval  ->  
    - "Does this capture the [section name] correctly?"
    - Options: "Yes — write it to the file", "Small changes needed (describe below)", "Major rethink needed"
    Do not proceed to step 7 until the user selects "Yes".
-7. **Write**: Use `user-decision checkpoint`: "May I write the [section name] section to `[filepath]`?"
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
    - Options: "Yes, write it", "Wait — one more change"
    Once confirmed, use `Edit` to replace the `[To be designed]` placeholder with approved content.
 
@@ -959,7 +963,7 @@ This skill follows the collaborative design principle at every step:
    - Phase 3: "May I create the skeleton?"
    - Phase 4 (each section): design questions, approach options, draft approval
    - Phase 5: "Run cross-reference check? What's next?"
-3. **"May I write to [filepath]?"** before the skeleton and before each section write
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 4. **Incremental writing**: Each section is written to file immediately after approval
 5. **Session state updates**: After every section write
 

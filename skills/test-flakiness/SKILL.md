@@ -5,6 +5,10 @@ argument-hint: "[ci-log-path | scan | registry]"
 user-invocable: true
 ---
 
+> **Codex skill execution semantics**
+> Execute this workflow as the single Codex/ChatGPT agent under `AGENTS.md`. References to teams, delegation, escalation, or specialist agents mean sequentially applying the relevant files under `agents/`; they do not imply separate running processes. Routine reversible writes and verification proceed without per-file approval. A user-decision checkpoint blocks only for a material product/architecture decision; otherwise use the recommended/default path, record the assumption, and continue.
+
+
 # Test Flakiness Detection
 
 A flaky test is one that sometimes passes and sometimes fails without any code
@@ -179,7 +183,7 @@ with the flaky tests found?"
 If yes: use `Edit` to append entries to the Quarantined Tests table.
 Never remove existing quarantine entries — only add new ones.
 
-Ask (separately): "May I write a full flakiness report to
+- Proceed with this write when it is within the user-requested scope; do not request per-file approval.
 `production/qa/flakiness-report-[date].md`?"
 
 The full report includes per-test analysis with cause details and
