@@ -2,10 +2,10 @@ import type { GameStore } from '../domain/game-store';
 import { GameplayLifecycle } from '../platform/gameplay-lifecycle';
 import type { PlatformAdapter, RewardedAdStatus } from '../platform/platform-adapter';
 
-export type OfflineDoubleStatus = 'rewarded' | 'duplicate' | 'unavailable' | 'closed' | 'error';
+export type RewardDoubleStatus = 'rewarded' | 'duplicate' | 'unavailable' | 'closed' | 'error';
 
-export interface OfflineDoubleResult {
-  readonly status: OfflineDoubleStatus;
+export interface RewardDoubleResult {
+  readonly status: RewardDoubleStatus;
   readonly amount: number;
 }
 
@@ -21,11 +21,16 @@ export class MonetizationService {
     return this.platform.getCapabilities().rewardedAds;
   }
 
-  public async doubleOfflineReward(
+  public async doubleOfflineReward(transactionId: string, baseOfflineFeathers: number): Promise<RewardDoubleResult> {
+    return this.doubleFeatherReward(transactionId, baseOfflineFeathers, 'offline-income-double');
+  }
+
+  public async doubleFeatherReward(
     transactionId: string,
-    baseOfflineFeathers: number,
-  ): Promise<OfflineDoubleResult> {
-    if (!Number.isFinite(baseOfflineFeathers) || baseOfflineFeathers <= 0) {
+    baseFeathers: number,
+    placement: string,
+  ): Promise<RewardDoubleResult> {
+    if (!Number.isFinite(baseFeathers) || baseFeathers <= 0) {
       return { status: 'unavailable', amount: 0 };
     }
 
@@ -40,7 +45,7 @@ export class MonetizationService {
     await this.lifecycle.pause('rewarded-ad');
     let adStatus: RewardedAdStatus = 'error';
     try {
-      const result = await this.platform.showRewarded('offline-income-double');
+      const result = await this.platform.showRewarded(placement);
       adStatus = result.status;
     } catch (error) {
       console.warn('Rewarded ad call failed.', error);
@@ -53,12 +58,12 @@ export class MonetizationService {
       return { status: adStatus, amount: 0 };
     }
 
-    const applied = this.store.applyRewardOnce(transactionId, baseOfflineFeathers);
+    const applied = this.store.applyRewardOnce(transactionId, baseFeathers);
     if (!applied.applied) {
       return { status: applied.reason === 'duplicate' ? 'duplicate' : 'error', amount: 0 };
     }
 
     this.persistImmediately();
-    return { status: 'rewarded', amount: baseOfflineFeathers };
+    return { status: 'rewarded', amount: baseFeathers };
   }
 }
