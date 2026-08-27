@@ -11,6 +11,8 @@ import {
 } from './economy-formulas';
 import { cloneState, type GameState } from './game-state';
 
+const MAX_APPLIED_REWARD_IDS = 128;
+
 export interface TapResult {
   readonly payout: number;
   readonly critical: boolean;
@@ -26,6 +28,13 @@ export interface PurchaseResult {
   readonly cost: number;
   readonly oldGrowthStage: number;
   readonly newGrowthStage: number;
+}
+
+export interface RewardApplyResult {
+  readonly applied: boolean;
+  readonly reason?: 'duplicate' | 'invalid';
+  readonly transactionId: string;
+  readonly amount: number;
 }
 
 export type GameStoreListener = (state: Readonly<GameState>) => void;
@@ -146,6 +155,29 @@ export class GameStore {
     if (!Number.isFinite(amount) || amount <= 0) return;
     this.state.feathers += amount;
     this.emit();
+  }
+
+  public hasAppliedReward(transactionId: string): boolean {
+    return this.state.appliedRewardIds.includes(transactionId);
+  }
+
+  public applyRewardOnce(transactionId: string, amount: number): RewardApplyResult {
+    const normalizedId = transactionId.trim();
+    if (!normalizedId || normalizedId.length > 120 || !Number.isFinite(amount) || amount <= 0) {
+      return { applied: false, reason: 'invalid', transactionId: normalizedId, amount: 0 };
+    }
+
+    if (this.state.appliedRewardIds.includes(normalizedId)) {
+      return { applied: false, reason: 'duplicate', transactionId: normalizedId, amount: 0 };
+    }
+
+    this.state.feathers += amount;
+    this.state.appliedRewardIds.push(normalizedId);
+    if (this.state.appliedRewardIds.length > MAX_APPLIED_REWARD_IDS) {
+      this.state.appliedRewardIds.splice(0, this.state.appliedRewardIds.length - MAX_APPLIED_REWARD_IDS);
+    }
+    this.emit();
+    return { applied: true, transactionId: normalizedId, amount };
   }
 
   public markSaved(now = Date.now()): void {
