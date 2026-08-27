@@ -12,16 +12,15 @@ export interface HeroScenePlacement {
   readonly silhouetteBounds: HeroSafeRect;
 }
 
-/**
- * Approximate readable silhouette inside the user-approved meme reference crop.
- * UI may sit over decorative jungle/water pixels, but never over this silhouette.
- */
 const MEME_PIGEON_SILHOUETTE = {
   left: 0.28,
   top: 0.43,
   right: 0.74,
   bottom: 0.94,
 } as const;
+
+const MEME_PIGEON_FOCAL_X = (MEME_PIGEON_SILHOUETTE.left + MEME_PIGEON_SILHOUETTE.right) / 2;
+const MEME_PIGEON_FOCAL_Y = (MEME_PIGEON_SILHOUETTE.top + MEME_PIGEON_SILHOUETTE.bottom) / 2;
 
 /**
  * Runtime mirror of the DOM reserved UI zones.
@@ -76,6 +75,26 @@ export function getCenteredHeroBox(viewportWidth: number, viewportHeight: number
 }
 
 /**
+ * Returns the image origin needed to place the pigeon focal point at the exact
+ * viewport center for any scale. Both sharp and decorative layers use this so
+ * the background copy cannot drift into a visible second pigeon.
+ */
+export function getMemePigeonFocalPosition(
+  viewportWidth: number,
+  viewportHeight: number,
+  sourceWidth: number,
+  sourceHeight: number,
+  scale: number,
+): { readonly x: number; readonly y: number } {
+  const displayWidth = sourceWidth * scale;
+  const displayHeight = sourceHeight * scale;
+  return {
+    x: viewportWidth / 2 - (MEME_PIGEON_FOCAL_X - 0.5) * displayWidth,
+    y: viewportHeight / 2 - (MEME_PIGEON_FOCAL_Y - 0.5) * displayHeight,
+  };
+}
+
+/**
  * Places the reference scene so the pigeon itself, rather than the rectangular
  * source image, is centered on the viewport. This lets the source raster extend
  * beneath decorative UI while keeping the readable bird completely clear.
@@ -98,13 +117,15 @@ export function getMemePigeonScenePlacement(
   const growthFactor = Math.min(1, 0.80 + Math.max(0, growthProgress) * 0.035);
   const scale = Math.min(fitScale, Math.max(minPresentationScale, fitScale * growthFactor));
 
+  const { x, y } = getMemePigeonFocalPosition(
+    viewportWidth,
+    viewportHeight,
+    sourceWidth,
+    sourceHeight,
+    scale,
+  );
   const displayWidth = sourceWidth * scale;
   const displayHeight = sourceHeight * scale;
-  const silhouetteCenterX = (MEME_PIGEON_SILHOUETTE.left + MEME_PIGEON_SILHOUETTE.right) / 2;
-  const silhouetteCenterY = (MEME_PIGEON_SILHOUETTE.top + MEME_PIGEON_SILHOUETTE.bottom) / 2;
-  const x = viewportWidth / 2 - (silhouetteCenterX - 0.5) * displayWidth;
-  const y = viewportHeight / 2 - (silhouetteCenterY - 0.5) * displayHeight;
-
   const left = x - displayWidth / 2 + MEME_PIGEON_SILHOUETTE.left * displayWidth;
   const top = y - displayHeight / 2 + MEME_PIGEON_SILHOUETTE.top * displayHeight;
   const right = x - displayWidth / 2 + MEME_PIGEON_SILHOUETTE.right * displayWidth;
