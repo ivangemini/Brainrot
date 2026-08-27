@@ -1,307 +1,222 @@
 # Pigeon Maxxing — Art Bible
 
-> **Status**: Approved for production direction v0.2
+> **Status**: Approved production direction v0.3
 > **Last Updated**: 2026-08-27
-> **Visual Identity Anchor**: Dead-Serious Urban Absurdity
-> **Target**: Mobile/desktop web, 2D/2.5D layered generated-raster presentation
+> **Canonical Hero**: user-approved blue meme pigeon with human-like orange lips
+> **Target**: mobile/desktop web, generated-raster presentation
 
-## 1. Visual Identity Statement
+## 1. Canonical visual identity
 
-### One-line rule
+The acquisition hook and in-game hero are the same recognizable meme-pigeon identity.
 
-**Render increasingly ridiculous pigeon progression with a consistent, polished, pseudo-tangible visual language as if the world takes every transformation completely seriously.**
+The hero is **not** a generic city pigeon. Mandatory traits:
+- saturated bright blue body/head;
+- human-like orange lips integrated into the mouth/beak area;
+- uncanny frontal expression and direct eye contact;
+- slightly absurd proportions;
+- surreal pond/jungle/luminous-nature mood;
+- immediate meme/brainrot readability at thumbnail size.
 
-### Supporting principles
+Canonical detail: `design/art/meme-pigeon-identity.md`.
 
-#### Progress Must Be Visible
-If a mechanic meaningfully increases player power or automation, give it a visible consequence in the pigeon, VFX, helpers, props, environment damage/reaction, or animation intensity.
+## 2. One-line art rule
 
-#### Readable Silhouette Before Detail
-At phone size, the player should be able to distinguish body/growth/mutation tiers without inspecting accessories. Large shape changes beat small texture detail.
+**Take the absurd meme pigeon completely seriously: premium generated-raster rendering, beautiful environments, escalating progression and an intentionally uncanny hero.**
 
-#### Escalation, Not Randomness
-Begin in an ordinary park/street reality. Every impossible visual should feel like the next consequence of the pigeon becoming too powerful, too wealthy or too large.
+The comedy comes from the contrast between polished presentation and a ridiculous central character.
 
-## 2. Mood & Atmosphere
+## 3. Hero-first composition
 
-### Normal clicker state
-- Mood: satisfying, playful, slightly deadpan.
-- Lighting: soft daylight, moderate contrast, warm-neutral city environment.
-- Energy: calm base with sharp reactive spikes on taps.
-- Carrier elements: rhythmic pigeon bob, subtle traffic/NPC movement, crumbs/feathers on impact.
+The pigeon is the primary focal point.
 
-### High combo
-- Mood: controlled chaos.
-- Lighting: same world lighting; intensity comes from VFX, animation frequency and micro-camera motion rather than changing the whole palette.
-- Energy: frenetic.
-- Carrier elements: faster pecking, wing flare, stronger particles, hit streak numbers, limited shake.
+- Hero anchor = actual viewport center.
+- Do not shift the hero left merely because a desktop upgrade panel exists.
+- UI routes around the hero.
+- Hero face, lips, torso and readable silhouette may not be covered by UI.
+- Hero growth may not intrude into the top HUD, desktop upgrade panel or mobile bottom tray.
+- If a Growth tier would collide with UI, reduce framing/zoom or change scene composition instead of allowing overlap.
+- Decorative background may continue behind translucent UI; the readable hero silhouette may not.
 
-### Growth threshold
-- Mood: spectacle and disbelief.
-- Lighting: short celebratory exposure/contrast lift, then return to world baseline.
-- Energy: one large punctuation event.
-- Carrier elements: scene zoom/reframe, environment reaction, debris/props/NPC response, strong growth stinger.
+Canonical layout contract: `design/ui/hero-first-layout.md`.
 
-### Mutation choice
-- Mood: dramatic reveal played completely straight.
-- Lighting: vignette/spotlight treatment, background softened.
-- Energy: deliberate pause from tapping.
-- Carrier elements: full pigeon silhouette, two/three clear mutation cards, mechanical outcome visible before selection.
+## 4. Progression identity
 
-### Event/minigame
-- Mood: concise arcade burst.
-- Lighting: preserve zone palette but increase clarity/contrast around interactable objects.
-- Energy: high, readable, no decorative clutter over targets.
+Growth, cosmetics and mutations amplify the same meme identity instead of replacing it.
 
-### Prestige / Ascension
-- Mood: absurdly ceremonial.
-- Lighting: strongest supernatural shift in the game; bright vertical light, sky treatment, particles.
-- Energy: slow build -> impact -> reset reveal.
+### Must remain recognizable
+- blue body identity;
+- orange human-like lips;
+- uncanny eyes/expression;
+- core pigeon silhouette language;
+- meme-first tone.
 
-## 3. Shape Language
+### Allowed escalation
+- chonk/body mass;
+- chest/stance changes;
+- larger physical scale;
+- sunglasses, chains, crowns and other large readable cosmetics;
+- aura, glow, water/environment changes;
+- followers/helper pigeons;
+- absurd late-game transformations.
 
-### Pigeon
-- Base silhouette: compact pear/bean torso, small head, readable beak wedge, simple legs.
-- Growth progression primarily increases torso mass, neck thickness, stance authority and screen occupancy.
-- Do not rely on uniform `scale()` alone for every stage; major stages need silhouette variants or body-tier layers.
-- Mutations exaggerate one dominant readable idea: muscle width, business/formal verticality, chaos/asymmetry.
+Do not evolve into a generic fantasy bird, realistic city pigeon or unrelated monster.
 
-### Accessories
-- One dominant accessory per silhouette region: head, face, neck, body, feet.
-- Avoid stacking so many items that the pigeon becomes visual noise.
-- High-value accessories should be recognizable at thumbnail scale through shape before material detail.
+## 5. Growth language
 
-### Environment
-- Early geometry: horizontal, human-scale, familiar — bench, curb, trash can, lamp, car.
-- As the pigeon grows, human-scale props become scale references and progressively break, move or disappear.
-- Later environment composition becomes increasingly vertical: buildings, cranes, helicopters, skyline.
+Total Upgrade Level controls physical scale and major visual tiers.
 
-### UI
-- Rounded-rect cards with strong hierarchy; simple geometric language distinct from the illustrated world.
-- Upgrade branches each get a stable **raster icon silhouette**.
-- Numeric information is dense but must never feel like a spreadsheet: icon + level + effect + cost + milestone preview.
+Small progression:
+- small scale increase;
+- stronger tap reactions;
+- cosmetic milestone additions;
+- stronger environment response.
 
-## 4. Color System
+Major Growth stages:
+- visibly larger body / framing;
+- stronger surrounding water/world reaction;
+- new large readable cosmetic or body treatment;
+- environment escalation;
+- new mechanic unlock where designed.
 
-### World palette
-- **Asphalt Ink** `#23252B` — deep urban neutral / shadows.
-- **Concrete Warm** `#C9C1B5` — ground/building neutral.
-- **Pigeon Blue-Gray** `#596574` — baseline feather family.
-- **Iridescent Teal** `#278B83` — neck/feather highlight.
-- **Iridescent Violet** `#6650A5` — secondary feather highlight.
-- **Bread Warmth** `#D99B53` — food/environment warmth.
+At every stage the character must still be recognizable as the same meme pigeon.
 
-### UI/reward palette
-- **Feather Gold** `#F2C84B` — primary currency and major value.
-- **Growth Lime** `#B8EE62` — growth meter / ready-to-grow state.
-- **Critical Coral** `#F36A62` — crit/combo impact, not generic danger.
-- **Info Cyan** `#66C7E8` — informational/system state.
-- **UI Cream** `#F5F1E8` — primary light text/surfaces.
-- **UI Ink** `#17191E` — dark panel foundation.
+## 6. Cosmetics
 
-### Semantic rules
-- Gold = currency/value/reward.
-- Lime = progression threshold and positive unlock readiness.
-- Coral = temporary impact/critical state; do not use it as the sole error signal.
-- Cyan = neutral information/automation/brain systems.
-- Violet/teal = pigeon identity, aura, mutation accents.
+Cosmetics must be legible immediately at gameplay scale.
 
-### Accessibility
-Every semantic state must have icon/shape/text backup. Do not encode affordability, danger, rarity or readiness by color alone.
+Good examples:
+- large sunglasses;
+- thick gold chain;
+- crown;
+- luminous feather/aura treatment;
+- obvious chest/body tier;
+- large head/neck accessory;
+- surrounding follower pigeons;
+- environment props tied to the build.
 
-## 5. Character / Pigeon Art Direction
+Avoid tiny decorative details that are only visible when zoomed in.
 
-### Production model
-The pigeon is a layered composite of **generated raster textures**, not a single final skin and not vector geometry.
+## 7. Environment direction
 
-Recommended runtime layer order:
-1. shadow;
-2. rear aura/background effects;
-3. rear wing;
-4. body;
-5. belly/chest overlay;
-6. legs/feet;
-7. front wing;
-8. head;
-9. eyes/expression;
-10. beak;
-11. neck accessory;
-12. body accessory;
-13. face accessory;
-14. head accessory;
-15. foreground hit/VFX.
+The baseline environment follows the meme reference more closely than the previous ordinary-city direction:
+- luminous pond / shallow water;
+- jungle/tropical vegetation;
+- strong sunlight shafts;
+- lilies and reflective water;
+- surreal but beautiful atmosphere.
 
-### Visual tiers
-Each upgrade branch can have many numerical levels but only 6–10 major art states in a long progression tier. Use milestone swaps plus runtime motion/effect treatment between them.
+Later zones may add city/wealth/cosmic elements, but the hero identity remains dominant.
 
-Example Beak progression language:
-- ordinary;
-- slightly larger/stronger;
-- hardened/shiny;
-- reinforced/metallic;
-- gold/status tier;
-- absurd high-power tier;
-- late mutation/cosmic tier.
+The environment should react to progression rather than becoming unrelated scenery.
 
-### Expressions
-- Default deadpan/serious expression is central to the humor.
-- High combo: narrowed/committed eyes, faster head motion.
-- Growth: momentary surprise/strain can be used, but return to deadpan authority.
-- Avoid constant cartoon smiles; the world is funnier when the pigeon appears to take progression seriously.
+## 8. UI direction
 
-### Originality rule
-Do not recreate a specific viral meme image, creator character design, watermark, voice, or signature pose. Use the cultural idea of “viral pigeon absurdity” only as trend context.
+Phaser/WebGL canvas owns:
+- hero;
+- world/background;
+- raster VFX;
+- minigame targets;
+- camera feedback.
 
-## 6. Environment Design Language
+HTML/CSS owns:
+- layout;
+- typography;
+- HUD;
+- upgrade cards;
+- event/result panels;
+- platform dialogs.
 
-### Zone 1 — Park
-- Bench, path, grass, lamp, trash can, bread/NPC anchors.
-- Designed to make the initial pigeon feel small and ordinary.
-- Growth reactions: bench bend -> crack -> destroy; nearby NPC behavior changes; camera backs away.
+UI can use translucent/glass panels over the decorative background, but interactive cards must stay in reserved zones and must not cover the hero silhouette.
 
-### Zone 2 — Street / Downtown
-- Cars, road markings, storefronts, traffic lights, pedestrians.
-- Provides stronger scale references for human/car/building-sized growth.
+### Desktop
+- compact HUD across top;
+- upgrades on right;
+- hero remains centered on full viewport;
+- hero size is constrained so it ends before the upgrade panel.
 
-### Later zones
-- High-rise skyline / infrastructure for mega scale.
-- Surreal/cosmic backgrounds only after the player has exhausted familiar city scale references.
+### Mobile portrait
+- compact top HUD;
+- hero remains at physical viewport center;
+- upgrades use a shallow scrollable bottom tray;
+- no tall bottom sheet that forces the hero upward;
+- no persistent center-screen cards.
 
-### Environment storytelling
-Every new growth stage should answer “how does the world cope with this pigeon now?” using props/NPCs/scale composition rather than explanatory text.
+## 9. Raster-only production rule
 
-## 7. UI / HUD Visual Direction
+All player-facing illustrated production art is generated raster art.
 
-### Rendering split
-- Phaser/WebGL canvas: pigeon, world, generated raster VFX textures, minigames, camera.
-- HTML/CSS overlay: layout, typography, resource bars, upgrade drawer/cards, collection, settings, platform-safe dialogs.
-- Illustrated UI elements and icons are generated raster PNG/WebP assets. CSS may construct panels/layout but must not become an illustration pipeline.
+Allowed:
+- WebP;
+- PNG;
+- raster atlases;
+- runtime transforms/tweens/particles over raster assets.
 
-### Main hierarchy
-1. Currency / income state.
-2. Pigeon as visual focal point.
-3. Tap/combo feedback.
-4. Next Growth meter.
-5. Upgrade purchase controls.
-6. Optional ad/secondary actions.
+Forbidden as production character/environment art:
+- SVG;
+- CSS illustration;
+- vector/shape-built pigeon;
+- canvas primitives used as replacement art;
+- temporary primitive art presented as production-ready.
 
-### Upgrade card anatomy
-Each branch card shows:
-- raster icon + branch name;
-- current level;
-- current mechanical effect;
-- next level delta;
-- price;
-- milestone indicator (`2 levels to visual upgrade` etc.).
+The current approved meme-pigeon reference is embedded as compact WebP raster data under `src/assets/meme-pigeon/` because the repository connector is text-only. This is a transport mechanism, not a return to procedural art.
 
-### Rewarded ads
-Ad buttons must visually differ from normal purchase buttons and explicitly state the reward: e.g. `Watch ad — 2x offline Feathers`.
+## 10. Animation / game feel
 
-### Responsive rules
-- Portrait mobile: pigeon/world upper ~55–65%, upgrades as bottom sheet/drawer.
-- Landscape/desktop: pigeon/world center-left, upgrade rail/panel right or bottom depending viewport.
-- Never place critical tap area beneath sticky ad-safe regions.
+Tap cycle target: roughly 120–190 ms.
+- short squash/recoil;
+- small camera impulse;
+- raster tap burst;
+- floating payout;
+- stronger but restrained critical response.
 
-## 8. VFX & Animation Style
-
-### Tap feedback
-Target total peck cycle: ~120–190 ms depending combo state.
-- head jab;
-- body squash/recoil;
-- generated raster feather/crumb texture particle;
-- floating value;
-- tiny impact pulse.
-
-### Combo escalation
-Use layers of intensity rather than spawning unlimited particles:
-- tier 1: faster motion;
-- tier 2: stronger floating-number treatment;
-- tier 3: wing motion + limited raster particles;
-- tier 4: restrained screen shake + aura/hit streak;
-- max tier: short controlled visual burst, never unreadable strobing.
-
-### Growth event
-- brief anticipation pause;
-- scale/silhouette transition;
-- camera reframe;
-- environment reaction;
+Growth ceremony:
+- quick anticipation;
+- scale/framing change;
+- short flash/impact;
 - milestone title;
-- audio stinger.
+- return to stable centered composition.
 
-### Performance
-Pool recurring particles and floating numbers. Cap simultaneous decorative particles. Prefer sprite/tween effects over expensive full-screen filters on low-end mobile.
+Do not use movement that permanently shifts the hero away from viewport center.
 
-## 9. Asset Standards
+## 11. Bread Rush
 
-### Source/runtime formats — hard contract
-- **All player-facing illustrated production art is generated raster art.**
-- Allowed production asset formats: PNG and WebP, including alpha textures and raster atlas pages.
-- First playable may use generated PNG textures for deterministic build-time generation; later production optimization may transcode suitable assets to WebP.
-- Use raster sprite atlases for small accessories, icons and repeated VFX once asset volume justifies them.
-- **SVG is not part of the production asset pipeline, including icons and logos.**
-- Do not use CSS/canvas/vector primitives as replacement art for the pigeon, world, props, accessories, illustrated icons or production VFX. HTML/CSS remains valid for UI layout, typography and panel geometry.
-- A temporary visual that would violate these rules is not acceptable merely because it is called a placeholder.
+Bread Rush uses the same canonical meme pigeon.
+- hero remains centered;
+- event HUD stays outside the readable hero silhouette;
+- bread targets may appear around the hero but must remain clearly tappable;
+- targets cannot hide the face for sustained periods;
+- event background remains visually connected to the main pond/jungle world.
 
-### Resolution targets
-- Base pigeon body master: 1024×1024 minimum working canvas per major body tier for production replacements.
-- Large hero/mutation masters: 1536–2048 px where needed for zoom/reframe.
-- Accessories: authored/generated against the same normalized pigeon anchor canvas.
-- UI icons: 128–256 px raster source depending prominence.
-- Atlas target: prefer <=2048×2048 pages for broad mobile compatibility and memory predictability; split logically by loading group.
+## 12. Accessibility / readability
 
-### Naming
-`[category]_[subject]_[tier-or-variant]_[state].[ext]`
+- Do not encode affordability/readiness by color alone.
+- Important state requires text/icon/shape redundancy.
+- Avoid excessive flashes and sustained shake.
+- Preserve touch target size on mobile.
+- Prioritize hero silhouette and target readability over decorative effects.
 
-Examples:
-- `char_pigeon_body_t02_idle.webp`
-- `char_pigeon_beak_t03_default.webp`
-- `acc_swag_glasses_v02.webp`
-- `env_park_bench_broken_02.webp`
-- `vfx_tap_crit_01.webp`
-- `ui_upgrade_beak_icon.webp`
+## 13. Runtime acceptance tests
 
-The deterministic first-playable generator uses shorter runtime paths under `public/assets/`; production asset imports should converge toward this naming grammar as the art pack expands.
+A player-facing visual pass is not accepted until:
+- hero identity matches the approved meme-pigeon direction;
+- hero is centered on desktop and mobile;
+- `data-hero-centered="true"` in browser QA;
+- `data-hero-safe="true"` in browser QA;
+- no UI covers hero face/torso/readable silhouette;
+- Growth remains inside safe bounds;
+- Bread Rush follows the same contract;
+- no SVG/vector production fallback appears;
+- desktop and mobile screenshots are reviewed at real runtime size;
+- no console/page errors are present.
 
-### Anchor discipline
-All modular pigeon parts must use documented pivot/anchor positions so they can be swapped without per-asset manual offsets. Maintain a canonical attachment manifest for head, beak, wings, neck, body and feet.
-
-### Loading groups
-Initial load should include only onboarding/main-screen essentials. Later growth tiers, zones, mutation art and event assets are lazy-loaded before their first use.
-
-## 10. Style Prohibitions
+## 14. Prohibitions
 
 Do not:
-- introduce SVG/vector player-facing art anywhere in the production asset path;
-- draw the pigeon/world/props/illustrated icons from CSS shapes or runtime vector primitives;
-- mix photorealistic pigeon photography with flat cartoon accessories without a unifying treatment;
-- make every milestone a random costume swap;
-- use tiny detail as the only signal of a meaningful upgrade;
-- rely on glow everywhere to imply value;
-- cover the pigeon with UI;
-- use excessive screen shake or flashing during sustained tapping;
-- create production screens from generic dark flat panels with placeholder art;
-- recreate recognizable protected meme artwork/branding one-to-one;
-- make late-game surrealism appear before ordinary city scale has been established.
-
-## 11. Asset Production Workflow
-
-1. Lock canonical base pigeon pose and anchor canvas.
-2. Generate body/growth silhouette tiers as raster masters/textures.
-3. Generate branch milestone layer sets against the canonical anchors.
-4. Generate environment reaction states tied to growth thresholds.
-5. Generate raster VFX/particle assets.
-6. Export runtime PNG/WebP/atlases; never SVG.
-7. Validate at actual phone-size gameplay scale.
-8. Validate composition combinations (not only assets in isolation).
-9. Reject assets that only look good as large concept art but fail in runtime.
-
-## 12. Art Acceptance Test
-
-A milestone asset passes only if:
-- the change is noticeable within ~1 second at target phone size;
-- it remains visually coherent with at least two other simultaneous branch upgrades;
-- it does not obscure tap feedback or growth meter hierarchy;
-- it conforms to canonical pivots/anchors;
-- its runtime cost fits loading/memory targets;
-- it communicates progression without requiring explanatory text;
-- it is a generated raster production asset and introduces no SVG/vector fallback.
+- revert to a generic gray pigeon;
+- remove the human-like orange lips from the core identity;
+- shift the hero out of screen center to solve UI layout;
+- let UI sit over the hero;
+- let Growth scale through UI reserved zones;
+- replace generated raster art with primitive/vector character art;
+- turn late-game progression into an unrelated creature;
+- use a polished store thumbnail that does not match the in-game hero.
