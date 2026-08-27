@@ -19,7 +19,9 @@ jobs:
           fetch-depth: 0
 
       - name: Run adaptation
-        run: python scripts/adapt_codex.py
+        run: |
+          python scripts/adapt_codex.py
+          python scripts/adapt_codex_cleanup.py
 
       - name: Validate adaptation
         run: |
@@ -34,9 +36,10 @@ jobs:
           test -f LICENSE
           echo "Agents: $(find agents -maxdepth 1 -name '*.md' | wc -l)"
           echo "Skills: $(find skills -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l)"
-          if grep -RIl --exclude-dir=.git --exclude='CCGS-README.md' --exclude='CCGS-UPGRADING.md' -E '\.claude/|CLAUDE\.md|AskUserQuestion|allowed-tools:|model: (sonnet|opus|haiku)' agents skills rules studio scripts production design docs src 2>/dev/null | head -1 | grep -q .; then
+          RESIDUAL=$(grep -RIl --exclude-dir=.git --exclude='CCGS-README.md' --exclude='CCGS-UPGRADING.md' --exclude='CODEX_ADAPTATION.md' -E '\.claude/|CLAUDE\.md|AskUserQuestion|allowed-tools:|model: (sonnet|opus|haiku)' agents skills rules studio scripts production design docs src 2>/dev/null || true)
+          if [ -n "$RESIDUAL" ]; then
             echo 'Residual active Claude-specific references found'
-            grep -RIl --exclude-dir=.git --exclude='CCGS-README.md' --exclude='CCGS-UPGRADING.md' -E '\.claude/|CLAUDE\.md|AskUserQuestion|allowed-tools:|model: (sonnet|opus|haiku)' agents skills rules studio scripts production design docs src 2>/dev/null | head -20
+            echo "$RESIDUAL" | head -20
             exit 1
           fi
 
