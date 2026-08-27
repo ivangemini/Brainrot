@@ -156,6 +156,9 @@ async function bootstrap(): Promise<void> {
           store.tick(simulationAccumulator, now);
           simulationAccumulator = 0;
         }
+      } else if (eventMode === 'active') {
+        simulationAccumulator = 0;
+        breadRushScene.advanceActiveTime(frameDelta);
       } else {
         simulationAccumulator = 0;
       }
