@@ -17,9 +17,18 @@ import {
 import type { GameStore } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 
+export type OfflineRewardActionStatus = 'rewarded' | 'duplicate' | 'unavailable' | 'closed' | 'error';
+
+export interface OfflineRewardOffer {
+  readonly amount: number;
+  readonly seconds: number;
+  readonly canDouble: boolean;
+  readonly onDouble?: () => Promise<{ readonly status: OfflineRewardActionStatus; readonly amount: number }>;
+}
+
 export interface UiShell {
   readonly destroy: () => void;
-  readonly showOfflineReward: (amount: number, seconds: number) => void;
+  readonly showOfflineReward: (offer: OfflineRewardOffer) => void;
 }
 
 export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
@@ -69,6 +78,7 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
       <div id="upgrade-list" class="upgrade-list"></div>
     </aside>
 
+    <div id="reward-host" class="reward-host"></div>
     <div id="toast-host" class="toast-host" aria-live="polite"></div>
   `;
 
@@ -83,6 +93,7 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
   const totalLevel = mustElement(root, '#total-level');
   const upgradeList = mustElement(root, '#upgrade-list');
   const tapHint = mustElement(root, '#tap-hint');
+  const rewardHost = mustElement(root, '#reward-host');
   const toastHost = mustElement(root, '#toast-host');
 
   const upgradeButtons = new Map<UpgradeBranchId, HTMLButtonElement>();
@@ -141,15 +152,85 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
 
   return {
     destroy: unsubscribe,
-    showOfflineReward: (amount, seconds) => {
-      if (amount <= 0) return;
-      showToast(
-        toastHost,
-        `While you were gone: +${formatEconomyNumber(amount)} Feathers (${formatDuration(seconds)})`,
-        'offline',
-      );
+    showOfflineReward: (offer) => {
+      if (offer.amount <= 0) return;
+      if (!offer.canDouble || !offer.onDouble) {
+        showToast(
+          toastHost,
+          `While you were gone: +${formatEconomyNumber(offer.amount)} Feathers (${formatDuration(offer.seconds)})`,
+          'offline',
+        );
+        return;
+      }
+
+      showOfflineRewardCard(rewardHost, toastHost, offer);
     },
   };
+}
+
+function showOfflineRewardCard(
+  host: HTMLElement,
+  toastHost: HTMLElement,
+  offer: OfflineRewardOffer,
+): void {
+  host.replaceChildren();
+  const card = document.createElement('section');
+  card.className = 'offline-reward-card glass-panel';
+  card.innerHTML = `
+    <button class="offline-reward-close" type="button" aria-label="Dismiss offline reward">×</button>
+    <img class="offline-reward-icon" src="/assets/ui/feather.png" alt="" />
+    <div class="offline-reward-copy">
+      <span class="eyebrow">WELCOME BACK</span>
+      <strong>+${formatEconomyNumber(offer.amount)} Feathers</strong>
+      <small>${formatDuration(offer.seconds)} away · base reward already claimed</small>
+      <span class="offline-reward-status">Watch an ad to add another +${formatEconomyNumber(offer.amount)}.</span>
+    </div>
+    <button class="offline-double-button" type="button">
+      <span>WATCH AD</span>
+      <b>2× OFFLINE</b>
+    </button>
+  `;
+  host.append(card);
+
+  const closeButton = card.querySelector<HTMLButtonElement>('.offline-reward-close')!;
+  const rewardButton = card.querySelector<HTMLButtonElement>('.offline-double-button')!;
+  const status = card.querySelector<HTMLElement>('.offline-reward-status')!;
+
+  closeButton.addEventListener('click', () => card.remove());
+  rewardButton.addEventListener('click', async () => {
+    if (!offer.onDouble) return;
+    rewardButton.disabled = true;
+    rewardButton.innerHTML = '<span>OPENING</span><b>AD…</b>';
+    status.textContent = 'Gameplay paused while the rewarded ad is open.';
+
+    const result = await offer.onDouble();
+    if (result.status === 'rewarded') {
+      card.classList.add('rewarded');
+      status.textContent = `Bonus claimed: +${formatEconomyNumber(result.amount)} Feathers.`;
+      rewardButton.innerHTML = '<span>CLAIMED</span><b>2× OFFLINE</b>';
+      showToast(toastHost, `Offline income doubled: +${formatEconomyNumber(result.amount)} bonus Feathers.`, 'growth');
+      window.setTimeout(() => card.remove(), 2200);
+      return;
+    }
+
+    if (result.status === 'duplicate') {
+      status.textContent = 'This offline bonus was already claimed.';
+      rewardButton.innerHTML = '<span>ALREADY</span><b>CLAIMED</b>';
+      return;
+    }
+
+    if (result.status === 'closed') {
+      status.textContent = 'Ad closed before the reward was confirmed.';
+      rewardButton.disabled = false;
+      rewardButton.innerHTML = '<span>TRY AGAIN</span><b>2× OFFLINE</b>';
+      return;
+    }
+
+    status.textContent = result.status === 'unavailable'
+      ? 'Rewarded ads are unavailable right now.'
+      : 'The ad failed. Your base offline reward is safe.';
+    rewardButton.innerHTML = '<span>NO BONUS</span><b>BASE KEPT</b>';
+  });
 }
 
 function renderUpgradeCards(
