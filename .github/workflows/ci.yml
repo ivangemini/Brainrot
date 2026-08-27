@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npm run art:generate
+      - name: Enforce raster-only production art
+        run: |
+          test "$(find public/assets -type f -name '*.png' | wc -l)" -ge 25
+          if find public/assets -type f -iname '*.svg' | grep -q .; then
+            echo 'SVG production art is forbidden.' >&2
+            exit 1
+          fi
+      - run: npm run test
+      - run: npm run build
