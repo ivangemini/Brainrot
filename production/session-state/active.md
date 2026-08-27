@@ -27,7 +27,7 @@
 
 ## Verification Evidence
 
-Code SHA `fa5e18ac7512e548759597ca397435bafc45a5b7`:
+Gameplay/browser code SHA `fa5e18ac7512e548759597ca397435bafc45a5b7`:
 
 - GitHub Actions CI run `33089332158`: PASS.
   - raster generation: PASS;
@@ -43,6 +43,8 @@ Code SHA `fa5e18ac7512e548759597ca397435bafc45a5b7`:
   - active Bread Rush captured after countdown;
   - active timer assertion passed;
   - console/page errors: none.
+
+Session-state documentation commit CI run `33089543876`: PASS.
 
 ## Current Visual Status
 
