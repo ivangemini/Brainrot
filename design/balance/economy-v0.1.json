@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "balanceVersion": "economy-v0.1",
+  "baseTap": 1.0,
+  "modelActiveTapsPerSecond": 4.0,
+  "creditedTapEngineeringCeilingPerSecond": 12.0,
+  "branches": {
+    "beak": {
+      "unlockTotalLevel": 0,
+      "baseCost": 15,
+      "costGrowth": 1.18,
+      "perLevelRawTap": 0.2,
+      "milestones": {"10": 1.5, "25": 1.6, "50": 1.75, "75": 1.8, "100": 2.0}
+    },
+    "body": {
+      "unlockTotalLevel": 10,
+      "baseCost": 70,
+      "costGrowth": 1.2,
+      "perLevelGlobalMultiplier": 0.04,
+      "milestones": {"10": 1.3, "25": 1.45, "50": 1.6, "75": 1.75, "100": 1.9}
+    },
+    "nest": {
+      "unlockTotalLevel": 20,
+      "baseCost": 160,
+      "costGrowth": 1.18,
+      "perLevelPassivePerSecond": 0.3,
+      "milestones": {"10": 1.5, "25": 1.6, "50": 1.8, "75": 2.0, "100": 2.2}
+    },
+    "wings": {
+      "unlockTotalLevel": 30,
+      "baseCost": 400,
+      "costGrowth": 1.19,
+      "comboCapPerLevel": 0.03,
+      "comboAdditionalCap": 1.5
+    },
+    "swag": {
+      "unlockTotalLevel": 45,
+      "baseCost": 950,
+      "costGrowth": 1.2,
+      "baseCritChance": 0.02,
+      "critChancePerLevel": 0.003,
+      "critChanceCap": 0.25,
+      "baseCritMultiplier": 3.0,
+      "critMultiplierPerLevel": 0.04
+    },
+    "brain": {
+      "unlockTotalLevel": 65,
+      "baseCost": 2500,
+      "costGrowth": 1.2,
+      "autoTapsPerSecondPerLevel": 0.12,
+      "milestones": {"10": 1.5, "25": 1.7, "50": 2.0, "75": 2.1, "100": 2.25}
+    }
+  },
+  "growthStages": [
+    {"id": "growth.normal", "threshold": 0},
+    {"id": "growth.chubby", "threshold": 10},
+    {"id": "growth.large", "threshold": 25},
+    {"id": "growth.big", "threshold": 50},
+    {"id": "growth.huge", "threshold": 90},
+    {"id": "growth.car-scale", "threshold": 150},
+    {"id": "growth.building-scale", "threshold": 240},
+    {"id": "growth.mega-city", "threshold": 360},
+    {"id": "growth.ascension-approach", "threshold": 420}
+  ],
+  "offline": {
+    "capSeconds": 28800,
+    "baseEfficiency": 0.5,
+    "brainEfficiencyPerLevel": 0.005,
+    "efficiencyCap": 0.85,
+    "rewardedMultiplier": 2.0
+  },
+  "mutation": {
+    "firstEligibilityTotalLevel": 150
+  }
+}
