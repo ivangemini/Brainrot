@@ -32,6 +32,17 @@ function sanitizeState(candidate: unknown, now: number): GameState {
     )))).slice(-MAX_APPLIED_REWARD_IDS)
     : [];
 
+  const rawEvents = raw.events && typeof raw.events === 'object' ? raw.events : fresh.events;
+  const breadRushBestScore = Number.isFinite(rawEvents.breadRushBestScore)
+    ? Math.max(0, Math.floor(rawEvents.breadRushBestScore))
+    : 0;
+  const breadRushRuns = Number.isFinite(rawEvents.breadRushRuns)
+    ? Math.max(0, Math.floor(rawEvents.breadRushRuns))
+    : 0;
+  const breadRushCooldownSeconds = Number.isFinite(rawEvents.breadRushCooldownSeconds)
+    ? Math.max(0, rawEvents.breadRushCooldownSeconds)
+    : 0;
+
   return {
     ...fresh,
     balanceVersion: typeof raw.balanceVersion === 'string' ? raw.balanceVersion : fresh.balanceVersion,
@@ -52,6 +63,11 @@ function sanitizeState(candidate: unknown, now: number): GameState {
       ? raw.discoveredGrowthStages.filter((v): v is number => Number.isInteger(v) && v >= 0)
       : [0],
     appliedRewardIds: rewardIds,
+    events: {
+      breadRushBestScore,
+      breadRushRuns,
+      breadRushCooldownSeconds,
+    },
   };
 }
 
@@ -84,6 +100,7 @@ export function saveGame(
     saveRevision: state.saveRevision,
     discoveredGrowthStages: [...state.discoveredGrowthStages],
     appliedRewardIds: [...state.appliedRewardIds].slice(-MAX_APPLIED_REWARD_IDS),
+    events: { ...state.events },
   };
   storage.setItem(SAVE_KEY, JSON.stringify(payload));
 }
