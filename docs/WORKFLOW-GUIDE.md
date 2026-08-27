@@ -1,14 +1,14 @@
-# Claude Code Game Studios -- Complete Workflow Guide
+# Codex Game Studio Framework -- Complete Workflow Guide
 
 > **How to go from zero to a shipped game using the Agent Architecture.**
 >
 > This guide walks you through every phase of game development using the
 > 49-agent system, 73 slash commands, and 12 automated hooks. It assumes you
-> have Claude Code installed and are working from the project root.
+> have Codex installed and are working from the project root.
 >
 > The pipeline has 7 phases. Each phase has a formal gate (`/gate-check`)
 > that must pass before you advance. The authoritative phase sequence is
-> defined in `.claude/docs/workflow-catalog.yaml` and read by `/help`.
+> defined in `studio/docs/workflow-catalog.yaml` and read by `/help`.
 
 ---
 
@@ -35,7 +35,7 @@
 
 Before you start, make sure you have:
 
-- **Claude Code** installed and working
+- **Codex** installed and working
 - **Git** with Git Bash (Windows) or standard terminal (Mac/Linux)
 - **jq** (optional but recommended -- hooks fall back to `grep` if missing)
 - **Python 3** (optional -- some hooks use it for JSON validation)
@@ -66,18 +66,18 @@ This guided onboarding asks where you are and routes you to the right phase:
 
 ### Step 3: Verify Hooks Are Working
 
-Start a new Claude Code session. You should see output from the
+Start a new Codex session. You should see output from the
 `session-start.sh` hook:
 
 ```
-=== Claude Code Game Studios -- Session Context ===
+=== Codex Game Studio Framework -- Session Context ===
 Branch: main
 Recent commits:
   abc1234 Initial commit
 ===================================
 ```
 
-If you see this, hooks are working. If not, check `.claude/settings.json` to
+If you see this, hooks are working. If not, check `AGENTS.md` to
 make sure the hook paths are correct for your OS.
 
 ### Step 4: Ask for Help Anytime
@@ -230,7 +230,7 @@ Or with a specific engine:
 
 **What /setup-engine does:**
 
-- Populates `.claude/docs/technical-preferences.md` with naming conventions,
+- Populates `studio/docs/technical-preferences.md` with naming conventions,
   performance budgets, and engine-specific defaults
 - Detects knowledge gaps (engine version newer than LLM training data) and
   advises cross-referencing `docs/engine-reference/`
@@ -1142,7 +1142,7 @@ Bypasses normal sprint processes with a full audit trail:
 
 ```
 Ask Claude to create a post-mortem using the template at
-.claude/docs/templates/post-mortem.md
+studio/docs/templates/post-mortem.md
 ```
 
 ---
@@ -1174,7 +1174,7 @@ By default they run at every checkpoint. You can control how much review you get
 The `--review` flag works on all gate-using skills. Change the global mode at any
 time by editing `production/review-mode.txt` directly or re-running `/start`.
 
-Full gate definitions and check pattern: `.claude/docs/director-gates.md`
+Full gate definitions and check pattern: `studio/docs/director-gates.md`
 
 ---
 
@@ -1195,9 +1195,9 @@ Every agent interaction follows this pattern:
 See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for the full protocol with
 examples.
 
-### The AskUserQuestion Tool
+### The user-decision checkpoint Tool
 
-Agents use the `AskUserQuestion` tool for structured option presentation.
+Agents use the `user-decision checkpoint` tool for structured option presentation.
 The pattern is Explain then Capture: full analysis in conversation text first,
 then a clean UI picker for the decision. Use it for design choices,
 architecture decisions, and strategic questions. Do not use it for open-ended
@@ -1253,7 +1253,7 @@ The system has 12 hooks that run automatically:
 | `validate-commit.sh` | Before commit | Checks for design doc references, valid JSON, no hardcoded values |
 | `validate-push.sh` | Before push | Warns on pushes to main/develop |
 | `validate-assets.sh` | Before commit | Checks asset naming and size |
-| `validate-skill-change.sh` | Skill file written | Advises running `/skill-test` after `.claude/skills/` changes |
+| `validate-skill-change.sh` | Skill file written | Advises running `/skill-test` after `skills/` changes |
 | `log-agent.sh` | Agent start | Logs agent invocations for audit trail |
 | `log-agent-stop.sh` | Agent stop | Completes agent audit trail (start + stop) |
 | `session-stop.sh` | Session end | Final session logging |

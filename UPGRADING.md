@@ -1,4 +1,4 @@
-# Upgrading Claude Code Game Studios
+# Upgrading Codex Game Studio Framework
 
 This guide covers upgrading your existing game project repo from one version
 of the template to the next.
@@ -47,8 +47,8 @@ Git will flag conflicts only in files that both the template *and* you have
 changed. Resolve each one — your game content goes in, structural improvements
 come along for the ride. Then commit the merge.
 
-**Tip:** The files most likely to conflict are `CLAUDE.md` and
-`.claude/docs/technical-preferences.md`, because you've filled them in with
+**Tip:** The files most likely to conflict are `AGENTS.md` and
+`studio/docs/technical-preferences.md`, because you've filled them in with
 your engine and project settings. Keep your content; accept the structural changes.
 
 ---
@@ -104,19 +104,19 @@ Best when: you didn't use git to set up the template (just downloaded a zip).
 
 **New files to add:**
 ```
-.claude/skills/art-bible/SKILL.md
-.claude/skills/asset-spec/SKILL.md
-.claude/docs/director-gates.md
+skills/art-bible/SKILL.md
+skills/asset-spec/SKILL.md
+studio/docs/director-gates.md
 ```
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/brainstorm/SKILL.md
-.claude/skills/gate-check/SKILL.md
-.claude/skills/team-level/SKILL.md
-.claude/skills/team-narrative/SKILL.md
-.claude/skills/design-system/SKILL.md
-.claude/docs/workflow-catalog.yaml
+skills/brainstorm/SKILL.md
+skills/gate-check/SKILL.md
+skills/team-level/SKILL.md
+skills/team-narrative/SKILL.md
+skills/design-system/SKILL.md
+studio/docs/workflow-catalog.yaml
 README.md
 UPGRADING.md
 ```
@@ -139,7 +139,7 @@ None — all changes are to infrastructure files with no user content.
 |----------|---------|
 | **New skill** | `/vertical-slice` — Pre-Production gate that validates the full game loop with a production-quality end-to-end build before Production. Pairs with the overhauled `/prototype` (concept validation right after `/brainstorm`). |
 | **New flow** | Entity inventory step in `/map-systems` — surfaces all named entities up front for cleaner downstream GDD authoring. |
-| **UX polish** | Added missing `AskUserQuestion` widgets to 7 skills; comprehensive skill audit for consistency, prompts, and flow gaps; exposed `--review` flag in `argument-hints` for all `team-*` skills. |
+| **UX polish** | Added missing `user-decision checkpoint` widgets to 7 skills; comprehensive skill audit for consistency, prompts, and flow gaps; exposed `--review` flag in `argument-hints` for all `team-*` skills. |
 | **Bug fixes** | `#21` log-agent hooks logged "unknown" `agent_type`; `#36` missing `allowed-tools` in `/architecture-decision` and `/story-done`; `#42` `rg --type gdscript` is invalid (now uses `--glob *.gd`); `#43` session-start preview showed oldest state instead of newest; `#45` duplicate `## 0.` heading and broken step numbering in `/architecture-decision`. |
 | **Project docs** | Added `CONTRIBUTING.md` (framework contribution guidelines) and `SECURITY.md` (coordinated disclosure policy). |
 | **Counts/refs** | Synced agent/skill/hook counts across `WORKFLOW-GUIDE.md`, `README.md`, and agent rosters; fixed stale agent names and skill model-tier fields. |
@@ -150,14 +150,14 @@ None — all changes are to infrastructure files with no user content.
 
 **New files to add:**
 ```
-.claude/skills/vertical-slice/SKILL.md
+skills/vertical-slice/SKILL.md
 CONTRIBUTING.md
 SECURITY.md
 ```
 
 **Existing files to overwrite (no user content):**
-- All files under `.claude/skills/` modified in the commit range (skill audit + AskUserQuestion widgets + `--review` argument-hints)
-- `.claude/hooks/log-agent.sh` (fix #21)
+- All files under `skills/` modified in the commit range (skill audit + user-decision checkpoint widgets + `--review` argument-hints)
+- `scripts/hooks/log-agent.sh` (fix #21)
 - `README.md`, `docs/WORKFLOW-GUIDE.md`, `docs/examples/skill-flow-diagrams.md`
 - `UPGRADING.md`
 
@@ -179,7 +179,7 @@ None — all changes are to infrastructure files with no user content.
 
 | Category | Changes |
 |----------|---------|
-| **New system** | Director gates — named review checkpoints shared across all workflow skills. Defined in `.claude/docs/director-gates.md` |
+| **New system** | Director gates — named review checkpoints shared across all workflow skills. Defined in `studio/docs/director-gates.md` |
 | **New feature** | Gate intensity modes: `full` (all director gates), `lean` (phase gates only), `solo` (no directors). Set globally via `production/review-mode.txt` during `/start`, or override per-run with `--review [mode]` on any gate-using skill |
 | **New agent** | `godot-csharp-specialist` — C# code quality in Godot 4 projects |
 | **Skill updates (13)** | All gate-using skills now parse `--review [full\|lean\|solo]` and include it in their argument-hint: `brainstorm`, `map-systems`, `design-system`, `architecture-decision`, `create-architecture`, `create-epics`, `create-stories`, `sprint-plan`, `milestone-review`, `playtest-report`, `prototype`, `story-done`, `gate-check` |
@@ -193,28 +193,28 @@ None — all changes are to infrastructure files with no user content.
 
 **New files to add:**
 ```
-.claude/agents/godot-csharp-specialist.md
-.claude/docs/director-gates.md
+agents/godot-csharp-specialist.md
+studio/docs/director-gates.md
 ```
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/brainstorm/SKILL.md
-.claude/skills/map-systems/SKILL.md
-.claude/skills/design-system/SKILL.md
-.claude/skills/architecture-decision/SKILL.md
-.claude/skills/create-architecture/SKILL.md
-.claude/skills/create-epics/SKILL.md
-.claude/skills/create-stories/SKILL.md
-.claude/skills/sprint-plan/SKILL.md
-.claude/skills/milestone-review/SKILL.md
-.claude/skills/playtest-report/SKILL.md
-.claude/skills/prototype/SKILL.md
-.claude/skills/story-done/SKILL.md
-.claude/skills/gate-check/SKILL.md
-.claude/skills/start/SKILL.md
-.claude/skills/quick-design/SKILL.md
-.claude/skills/setup-engine/SKILL.md
+skills/brainstorm/SKILL.md
+skills/map-systems/SKILL.md
+skills/design-system/SKILL.md
+skills/architecture-decision/SKILL.md
+skills/create-architecture/SKILL.md
+skills/create-epics/SKILL.md
+skills/create-stories/SKILL.md
+skills/sprint-plan/SKILL.md
+skills/milestone-review/SKILL.md
+skills/playtest-report/SKILL.md
+skills/prototype/SKILL.md
+skills/story-done/SKILL.md
+skills/gate-check/SKILL.md
+skills/start/SKILL.md
+skills/quick-design/SKILL.md
+skills/setup-engine/SKILL.md
 README.md
 docs/WORKFLOW-GUIDE.md
 UPGRADING.md
@@ -233,7 +233,7 @@ No files require manual merging in this release. All changes are to infrastructu
 #### Director Gates System
 
 All major workflow skills now reference named gate checkpoints defined in
-`.claude/docs/director-gates.md`. Gates are identified by domain prefix and name
+`studio/docs/director-gates.md`. Gates are identified by domain prefix and name
 (e.g., `CD-CONCEPT`, `TD-ARCHITECTURE`, `LP-CODE-REVIEW`). Each gate defines
 which director to spawn, what inputs to pass, what verdicts mean, and how
 lean/solo modes affect it.
@@ -264,7 +264,7 @@ individual run with `--review [mode]` on any gate-using skill:
 ### After Upgrading
 
 1. Run `/start` once to set your preferred review mode — or create `production/review-mode.txt` manually with `full`, `lean`, or `solo`.
-2. If you're mid-project, review `.claude/docs/director-gates.md` to understand which gates apply to your current phase.
+2. If you're mid-project, review `studio/docs/director-gates.md` to understand which gates apply to your current phase.
 3. Run `/skill-test static all` to verify all skills pass structural checks.
 
 ---
@@ -280,7 +280,7 @@ individual run with `--review [mode]` on any gate-using skill:
 | Category | Changes |
 |----------|---------|
 | **New skills (1)** | `/consistency-check` — cross-GDD entity consistency scanner |
-| **Skill fixes (all team-*)** | Added no-argument guards, formal `Verdict: COMPLETE / BLOCKED` keywords, per-step AskUserQuestion gates, adjacent area dependency checks (team-level), ethics enforcement (team-live-ops), NO-GO path with Phase skip (team-release) |
+| **Skill fixes (all team-*)** | Added no-argument guards, formal `Verdict: COMPLETE / BLOCKED` keywords, per-step user-decision checkpoint gates, adjacent area dependency checks (team-level), ethics enforcement (team-live-ops), NO-GO path with Phase skip (team-release) |
 | **Agent fixes (4)** | Genre-agnostic language in game-designer, systems-designer, economy-designer, live-ops-designer — removed RPG-specific terms |
 
 ---
@@ -289,27 +289,27 @@ individual run with `--review [mode]` on any gate-using skill:
 
 **New files to add:**
 ```
-.claude/skills/consistency-check/SKILL.md
+skills/consistency-check/SKILL.md
 ```
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/team-combat/SKILL.md      ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/team-narrative/SKILL.md   ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/team-ui/SKILL.md          ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/team-release/SKILL.md     ← no-arg guard, verdict keywords, NO-GO path
-.claude/skills/team-polish/SKILL.md      ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/team-audio/SKILL.md       ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/team-level/SKILL.md       ← no-arg guard, verdict keywords, adjacent area checks
-.claude/skills/team-live-ops/SKILL.md    ← no-arg guard, verdict keywords, ethics enforcement
-.claude/skills/team-qa/SKILL.md          ← no-arg guard, verdict keywords, gate improvements
-.claude/skills/map-systems/SKILL.md      ← verdict keywords
-.claude/skills/create-epics/SKILL.md     ← "May I write" protocol fix, verdict keywords
-.claude/skills/create-stories/SKILL.md   ← verdict keywords
-.claude/agents/game-designer.md          ← genre-agnostic language
-.claude/agents/systems-designer.md       ← genre-agnostic language
-.claude/agents/economy-designer.md       ← genre-agnostic language
-.claude/agents/live-ops-designer.md      ← genre-agnostic language
+skills/team-combat/SKILL.md      ← no-arg guard, verdict keywords, gate improvements
+skills/team-narrative/SKILL.md   ← no-arg guard, verdict keywords, gate improvements
+skills/team-ui/SKILL.md          ← no-arg guard, verdict keywords, gate improvements
+skills/team-release/SKILL.md     ← no-arg guard, verdict keywords, NO-GO path
+skills/team-polish/SKILL.md      ← no-arg guard, verdict keywords, gate improvements
+skills/team-audio/SKILL.md       ← no-arg guard, verdict keywords, gate improvements
+skills/team-level/SKILL.md       ← no-arg guard, verdict keywords, adjacent area checks
+skills/team-live-ops/SKILL.md    ← no-arg guard, verdict keywords, ethics enforcement
+skills/team-qa/SKILL.md          ← no-arg guard, verdict keywords, gate improvements
+skills/map-systems/SKILL.md      ← verdict keywords
+skills/create-epics/SKILL.md     ← "May I write" protocol fix, verdict keywords
+skills/create-stories/SKILL.md   ← verdict keywords
+agents/game-designer.md          ← genre-agnostic language
+agents/systems-designer.md       ← genre-agnostic language
+agents/economy-designer.md       ← genre-agnostic language
+agents/live-ops-designer.md      ← genre-agnostic language
 ```
 
 ---
@@ -351,7 +351,7 @@ No files require manual merging in this release. All changes are to infrastructu
 | **Agent updates** | 14 specialist agents — `memory: project` added |
 | **Agent updates** | `prototyper` — `isolation: worktree` (throwaway work in isolated git branch) |
 | **Model routing** | Haiku/Sonnet/Opus tier assignments documented in coordination rules; skills declare their tier in frontmatter |
-| **Directory CLAUDE.md** | Scaffolded `design/CLAUDE.md`, `src/CLAUDE.md`, `docs/CLAUDE.md` — path-scoped instructions for each directory |
+| **Directory AGENTS.md** | Scaffolded `design/AGENTS.md`, `src/AGENTS.md`, `docs/AGENTS.md` — path-scoped instructions for each directory |
 | **Pipeline integrity** | TR-ID stability, manifest versioning, ADR status gates, TR-ID reference not quote |
 | **GDD template** | `## Game Feel` section added (input responsiveness, animation targets, impact moments) |
 
@@ -361,61 +361,61 @@ No files require manual merging in this release. All changes are to infrastructu
 
 **New files to add:**
 ```
-.claude/skills/ux-design/SKILL.md
-.claude/skills/ux-review/SKILL.md
-.claude/skills/help/SKILL.md
-.claude/skills/quick-design/SKILL.md
-.claude/skills/review-all-gdds/SKILL.md
-.claude/skills/story-readiness/SKILL.md
-.claude/skills/story-done/SKILL.md
-.claude/skills/sprint-status/SKILL.md
-.claude/skills/adopt/SKILL.md
-.claude/skills/create-architecture/SKILL.md
-.claude/skills/create-control-manifest/SKILL.md
-.claude/skills/create-epics/SKILL.md
-.claude/skills/create-stories/SKILL.md
-.claude/skills/dev-story/SKILL.md
-.claude/skills/propagate-design-change/SKILL.md
-.claude/skills/content-audit/SKILL.md
-.claude/skills/architecture-review/SKILL.md
-.claude/skills/qa-plan/SKILL.md
-.claude/skills/smoke-check/SKILL.md
-.claude/skills/soak-test/SKILL.md
-.claude/skills/regression-suite/SKILL.md
-.claude/skills/test-setup/SKILL.md
-.claude/skills/test-helpers/SKILL.md
-.claude/skills/test-evidence-review/SKILL.md
-.claude/skills/test-flakiness/SKILL.md
-.claude/skills/skill-test/SKILL.md
-.claude/skills/bug-triage/SKILL.md
-.claude/skills/team-live-ops/SKILL.md
-.claude/skills/team-qa/SKILL.md
-.claude/hooks/log-agent-stop.sh
-.claude/hooks/notify.sh
-.claude/hooks/post-compact.sh
-.claude/hooks/validate-skill-change.sh
-.claude/docs/workflow-catalog.yaml
-.claude/docs/templates/ux-spec.md
-.claude/docs/templates/hud-design.md
-.claude/docs/templates/accessibility-requirements.md
-.claude/docs/templates/interaction-pattern-library.md
-.claude/docs/templates/player-journey.md
-.claude/docs/templates/difficulty-curve.md
-design/CLAUDE.md
-src/CLAUDE.md
-docs/CLAUDE.md
+skills/ux-design/SKILL.md
+skills/ux-review/SKILL.md
+skills/help/SKILL.md
+skills/quick-design/SKILL.md
+skills/review-all-gdds/SKILL.md
+skills/story-readiness/SKILL.md
+skills/story-done/SKILL.md
+skills/sprint-status/SKILL.md
+skills/adopt/SKILL.md
+skills/create-architecture/SKILL.md
+skills/create-control-manifest/SKILL.md
+skills/create-epics/SKILL.md
+skills/create-stories/SKILL.md
+skills/dev-story/SKILL.md
+skills/propagate-design-change/SKILL.md
+skills/content-audit/SKILL.md
+skills/architecture-review/SKILL.md
+skills/qa-plan/SKILL.md
+skills/smoke-check/SKILL.md
+skills/soak-test/SKILL.md
+skills/regression-suite/SKILL.md
+skills/test-setup/SKILL.md
+skills/test-helpers/SKILL.md
+skills/test-evidence-review/SKILL.md
+skills/test-flakiness/SKILL.md
+skills/skill-test/SKILL.md
+skills/bug-triage/SKILL.md
+skills/team-live-ops/SKILL.md
+skills/team-qa/SKILL.md
+scripts/hooks/log-agent-stop.sh
+scripts/hooks/notify.sh
+scripts/hooks/post-compact.sh
+scripts/hooks/validate-skill-change.sh
+studio/docs/workflow-catalog.yaml
+studio/docs/templates/ux-spec.md
+studio/docs/templates/hud-design.md
+studio/docs/templates/accessibility-requirements.md
+studio/docs/templates/interaction-pattern-library.md
+studio/docs/templates/player-journey.md
+studio/docs/templates/difficulty-curve.md
+design/AGENTS.md
+src/AGENTS.md
+docs/AGENTS.md
 ```
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/gate-check/SKILL.md
-.claude/skills/sprint-plan/SKILL.md
-.claude/skills/sprint-status/SKILL.md
-.claude/skills/design-review/SKILL.md
-.claude/skills/team-ui/SKILL.md
-.claude/skills/story-readiness/SKILL.md
-.claude/skills/story-done/SKILL.md
-.claude/docs/templates/game-design-document.md    ← adds Game Feel section
+skills/gate-check/SKILL.md
+skills/sprint-plan/SKILL.md
+skills/sprint-status/SKILL.md
+skills/design-review/SKILL.md
+skills/team-ui/SKILL.md
+skills/story-readiness/SKILL.md
+skills/story-done/SKILL.md
+studio/docs/templates/game-design-document.md    ← adds Game Feel section
 README.md
 docs/WORKFLOW-GUIDE.md
 UPGRADING.md
@@ -423,34 +423,34 @@ UPGRADING.md
 
 **Agent files to overwrite** (if you haven't written custom prompts into them):
 ```
-.claude/agents/prototyper.md         ← adds isolation: worktree
-.claude/agents/art-director.md       ← adds memory: project
-.claude/agents/audio-director.md     ← adds memory: project
-.claude/agents/economy-designer.md   ← adds memory: project
-.claude/agents/game-designer.md      ← adds memory: project
-.claude/agents/gameplay-programmer.md ← adds memory: project
-.claude/agents/lead-programmer.md    ← adds memory: project
-.claude/agents/level-designer.md     ← adds memory: project
-.claude/agents/narrative-director.md ← adds memory: project
-.claude/agents/systems-designer.md   ← adds memory: project
-.claude/agents/technical-artist.md   ← adds memory: project
-.claude/agents/ui-programmer.md      ← adds memory: project
-.claude/agents/ux-designer.md        ← adds memory: project
-.claude/agents/world-builder.md      ← adds memory: project
+agents/prototyper.md         ← adds isolation: worktree
+agents/art-director.md       ← adds memory: project
+agents/audio-director.md     ← adds memory: project
+agents/economy-designer.md   ← adds memory: project
+agents/game-designer.md      ← adds memory: project
+agents/gameplay-programmer.md ← adds memory: project
+agents/lead-programmer.md    ← adds memory: project
+agents/level-designer.md     ← adds memory: project
+agents/narrative-director.md ← adds memory: project
+agents/systems-designer.md   ← adds memory: project
+agents/technical-artist.md   ← adds memory: project
+agents/ui-programmer.md      ← adds memory: project
+agents/ux-designer.md        ← adds memory: project
+agents/world-builder.md      ← adds memory: project
 ```
 
 ---
 
 ### Files: Merge Carefully
 
-#### `.claude/settings.json`
+#### `AGENTS.md`
 
 Four new hooks are registered in this version. If you haven't customized `settings.json`, overwriting is safe. Otherwise, add the following hook entries manually:
 
 - `log-agent-stop.sh` — `SubagentStop` event (agent audit trail stop)
 - `notify.sh` — `Notification` event (Windows toast notification)
 - `post-compact.sh` — `PostCompact` event (session recovery reminder)
-- `validate-skill-change.sh` — `PostToolUse` event filtered to `.claude/skills/` writes
+- `validate-skill-change.sh` — `PostToolUse` event filtered to `skills/` writes
 
 #### Customized agent files
 
@@ -516,7 +516,7 @@ Also new: **`/bug-triage`** re-evaluates all open bugs for priority, severity, a
 `/skill-test` is a meta-skill for validating the harness itself. Run it after editing any skill file. Three modes:
 - `lint` — validates YAML frontmatter and required fields
 - `spec [skill-name]` — runs behavioral spec tests against a specific skill
-- `catalog` — checks that all skills in `.claude/skills/` are indexed in the catalog
+- `catalog` — checks that all skills in `skills/` are indexed in the catalog
 
 The new `validate-skill-change.sh` hook reminds you to run `/skill-test` automatically when a skill file is modified.
 
@@ -527,19 +527,19 @@ The new `validate-skill-change.sh` hook reminds you to run `/skill-test` automat
 
 #### Model Tier Routing
 
-Skills are now explicitly assigned to Haiku, Sonnet, or Opus tiers based on task complexity. Read-only status checks use Haiku; complex multi-document synthesis uses Opus; everything else defaults to Sonnet. Tier assignments are documented in `.claude/docs/coordination-rules.md`.
+Skills are now explicitly assigned to Haiku, Sonnet, or Opus tiers based on task complexity. Read-only status checks use Haiku; complex multi-document synthesis uses Opus; everything else defaults to Sonnet. Tier assignments are documented in `studio/docs/coordination-rules.md`.
 
-#### Directory CLAUDE.md Files
+#### Directory AGENTS.md Files
 
-Three new directory-scoped CLAUDE.md files (`design/`, `src/`, `docs/`) provide path-specific instructions to agents working in those directories. These load automatically when Claude Code reads files in that directory.
+Three new directory-scoped AGENTS.md files (`design/`, `src/`, `docs/`) provide path-specific instructions to agents working in those directories. These load automatically when Codex reads files in that directory.
 
 ---
 
 ### After Upgrading
 
-1. **Verify new hooks** are registered in `.claude/settings.json` — check for all four: `log-agent-stop.sh`, `notify.sh`, `post-compact.sh`, `validate-skill-change.sh`.
+1. **Verify new hooks** are registered in `AGENTS.md` — check for all four: `log-agent-stop.sh`, `notify.sh`, `post-compact.sh`, `validate-skill-change.sh`.
 
-2. **Test the audit trail** by spawning any subagent — both start and stop events should appear in `production/session-logs/`.
+2. **Test the audit trail** by spawning any role profile — both start and stop events should appear in `production/session-logs/`.
 
 3. **Generate sprint-status.yaml** if you're in active production:
    ```
@@ -574,7 +574,7 @@ The `/design-systems` skill was renamed to `/map-systems` for clarity
 |----------|---------|
 | **New skills** | `/design-system` (guided GDD authoring, section-by-section) |
 | **Renamed skills** | `/design-systems` → `/map-systems` (breaking rename) |
-| **New files** | `.claude/statusline.sh`, `.claude/settings.json` statusline config |
+| **New files** | `studio/statusline.sh`, `AGENTS.md` statusline config |
 | **Skill updates** | `/gate-check` — writes `production/stage.txt` on PASS, new phase definitions |
 | **Skill updates** | `brainstorm`, `start`, `design-review`, `project-stage-detect`, `setup-engine` — cross-reference fixes |
 | **Bug fixes** | `log-agent.sh`, `validate-commit.sh` — hook execution fixed |
@@ -586,21 +586,21 @@ The `/design-systems` skill was renamed to `/map-systems` for clarity
 
 **New files to add:**
 ```
-.claude/skills/design-system/SKILL.md
-.claude/statusline.sh
+skills/design-system/SKILL.md
+studio/statusline.sh
 ```
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/map-systems/SKILL.md      ← was design-systems/SKILL.md
-.claude/skills/gate-check/SKILL.md
-.claude/skills/brainstorm/SKILL.md
-.claude/skills/start/SKILL.md
-.claude/skills/design-review/SKILL.md
-.claude/skills/project-stage-detect/SKILL.md
-.claude/skills/setup-engine/SKILL.md
-.claude/hooks/log-agent.sh
-.claude/hooks/validate-commit.sh
+skills/map-systems/SKILL.md      ← was design-systems/SKILL.md
+skills/gate-check/SKILL.md
+skills/brainstorm/SKILL.md
+skills/start/SKILL.md
+skills/design-review/SKILL.md
+skills/project-stage-detect/SKILL.md
+skills/setup-engine/SKILL.md
+scripts/hooks/log-agent.sh
+scripts/hooks/validate-commit.sh
 README.md
 docs/WORKFLOW-GUIDE.md
 UPGRADING.md
@@ -608,22 +608,22 @@ UPGRADING.md
 
 **Delete (replaced by rename):**
 ```
-.claude/skills/design-systems/   ← entire directory; replaced by map-systems/
+skills/design-systems/   ← entire directory; replaced by map-systems/
 ```
 
 ---
 
 ### Files: Merge Carefully
 
-#### `.claude/settings.json`
+#### `AGENTS.md`
 
 The new version adds a `statusLine` configuration block pointing to
-`.claude/statusline.sh`. If you haven't customized `settings.json`, overwriting
+`studio/statusline.sh`. If you haven't customized `settings.json`, overwriting
 is safe. Otherwise, add this block manually:
 
 ```json
 "statusLine": {
-  "script": ".claude/statusline.sh"
+  "script": "studio/statusline.sh"
 }
 ```
 
@@ -633,7 +633,7 @@ is safe. Otherwise, add this block manually:
 
 #### Custom Status Line
 
-`.claude/statusline.sh` displays a 7-stage production pipeline breadcrumb in
+`studio/statusline.sh` displays a 7-stage production pipeline breadcrumb in
 the terminal status line:
 
 ```
@@ -662,16 +662,16 @@ future sessions without requiring manual file edits.
 
 1. **Delete the old skill directory:**
    ```bash
-   rm -rf .claude/skills/design-systems/
+   rm -rf skills/design-systems/
    ```
 
-2. **Test the status line** by starting a Claude Code session — you should see
+2. **Test the status line** by starting a Codex session — you should see
    the stage breadcrumb in the terminal footer.
 
 3. **Verify hook execution** still works:
    ```bash
-   bash .claude/hooks/log-agent.sh '{}' '{}'
-   bash .claude/hooks/validate-commit.sh '{}' '{}'
+   bash scripts/hooks/log-agent.sh '{}' '{}'
+   bash scripts/hooks/validate-commit.sh '{}' '{}'
    ```
 
 ---
@@ -680,7 +680,7 @@ future sessions without requiring manual file edits.
 
 **Released:** 2026-02-21
 **Commit range:** `ad540fe..e289ce9`
-**Key themes:** Context Resilience, AskUserQuestion integration, `/map-systems` skill
+**Key themes:** Context Resilience, user-decision checkpoint integration, `/map-systems` skill
 
 ### What Changed
 
@@ -690,9 +690,9 @@ future sessions without requiring manual file edits.
 | **New hooks** | `session-start.sh` (recovery), `detect-gaps.sh` (gap detection) |
 | **New templates** | `systems-index.md`, 3 collaborative-protocol templates |
 | **Context management** | Major rewrite — file-backed state strategy added |
-| **Agent updates** | 14 design/creative agents — AskUserQuestion integration |
-| **Skill updates** | All 7 `team-*` skills + `brainstorm` — AskUserQuestion at phase transitions |
-| **CLAUDE.md** | Slimmed from ~159 to ~60 lines; 5 doc imports instead of 10 |
+| **Agent updates** | 14 design/creative agents — user-decision checkpoint integration |
+| **Skill updates** | All 7 `team-*` skills + `brainstorm` — user-decision checkpoint at phase transitions |
+| **AGENTS.md** | Slimmed from ~159 to ~60 lines; 5 doc imports instead of 10 |
 | **Hook updates** | All 8 hooks — Windows compatibility fixes, new features |
 | **Docs removed** | `docs/IMPROVEMENTS-PROPOSAL.md`, `docs/MULTI-STAGE-DOCUMENT-WORKFLOW.md` |
 
@@ -705,15 +705,15 @@ versions directly with no risk to your project content.
 
 **New files to add:**
 ```
-.claude/skills/start/SKILL.md
-.claude/skills/map-systems/SKILL.md
-.claude/skills/design-system/SKILL.md
-.claude/docs/templates/systems-index.md
-.claude/docs/templates/collaborative-protocols/design-agent-protocol.md
-.claude/docs/templates/collaborative-protocols/implementation-agent-protocol.md
-.claude/docs/templates/collaborative-protocols/leadership-agent-protocol.md
-.claude/hooks/detect-gaps.sh
-.claude/hooks/session-start.sh
+skills/start/SKILL.md
+skills/map-systems/SKILL.md
+skills/design-system/SKILL.md
+studio/docs/templates/systems-index.md
+studio/docs/templates/collaborative-protocols/design-agent-protocol.md
+studio/docs/templates/collaborative-protocols/implementation-agent-protocol.md
+studio/docs/templates/collaborative-protocols/leadership-agent-protocol.md
+scripts/hooks/detect-gaps.sh
+scripts/hooks/session-start.sh
 production/session-state/.gitkeep
 docs/examples/README.md
 .github/ISSUE_TEMPLATE/bug_report.md
@@ -723,30 +723,30 @@ docs/examples/README.md
 
 **Existing files to overwrite (no user content):**
 ```
-.claude/skills/brainstorm/SKILL.md
-.claude/skills/design-review/SKILL.md
-.claude/skills/gate-check/SKILL.md
-.claude/skills/project-stage-detect/SKILL.md
-.claude/skills/setup-engine/SKILL.md
-.claude/skills/team-audio/SKILL.md
-.claude/skills/team-combat/SKILL.md
-.claude/skills/team-level/SKILL.md
-.claude/skills/team-narrative/SKILL.md
-.claude/skills/team-polish/SKILL.md
-.claude/skills/team-release/SKILL.md
-.claude/skills/team-ui/SKILL.md
-.claude/hooks/log-agent.sh
-.claude/hooks/pre-compact.sh
-.claude/hooks/session-stop.sh
-.claude/hooks/validate-assets.sh
-.claude/hooks/validate-commit.sh
-.claude/hooks/validate-push.sh
-.claude/rules/design-docs.md
-.claude/docs/hooks-reference.md
-.claude/docs/skills-reference.md
-.claude/docs/quick-start.md
-.claude/docs/directory-structure.md
-.claude/docs/context-management.md
+skills/brainstorm/SKILL.md
+skills/design-review/SKILL.md
+skills/gate-check/SKILL.md
+skills/project-stage-detect/SKILL.md
+skills/setup-engine/SKILL.md
+skills/team-audio/SKILL.md
+skills/team-combat/SKILL.md
+skills/team-level/SKILL.md
+skills/team-narrative/SKILL.md
+skills/team-polish/SKILL.md
+skills/team-release/SKILL.md
+skills/team-ui/SKILL.md
+scripts/hooks/log-agent.sh
+scripts/hooks/pre-compact.sh
+scripts/hooks/session-stop.sh
+scripts/hooks/validate-assets.sh
+scripts/hooks/validate-commit.sh
+scripts/hooks/validate-push.sh
+rules/design-docs.md
+studio/docs/hooks-reference.md
+studio/docs/skills-reference.md
+studio/docs/quick-start.md
+studio/docs/directory-structure.md
+studio/docs/context-management.md
 docs/COLLABORATIVE-DESIGN-PRINCIPLE.md
 docs/WORKFLOW-GUIDE.md
 README.md
@@ -754,20 +754,20 @@ README.md
 
 **Agent files to overwrite** (if you haven't written custom prompts into them):
 ```
-.claude/agents/art-director.md
-.claude/agents/audio-director.md
-.claude/agents/creative-director.md
-.claude/agents/economy-designer.md
-.claude/agents/game-designer.md
-.claude/agents/level-designer.md
-.claude/agents/live-ops-designer.md
-.claude/agents/narrative-director.md
-.claude/agents/producer.md
-.claude/agents/systems-designer.md
-.claude/agents/technical-director.md
-.claude/agents/ux-designer.md
-.claude/agents/world-builder.md
-.claude/agents/writer.md
+agents/art-director.md
+agents/audio-director.md
+agents/creative-director.md
+agents/economy-designer.md
+agents/game-designer.md
+agents/level-designer.md
+agents/live-ops-designer.md
+agents/narrative-director.md
+agents/producer.md
+agents/systems-designer.md
+agents/technical-director.md
+agents/ux-designer.md
+agents/world-builder.md
+agents/writer.md
 ```
 
 If you *have* customized agent prompts, see "Merge carefully" below.
@@ -779,11 +779,11 @@ If you *have* customized agent prompts, see "Merge carefully" below.
 These files contain both template structure and your project-specific content.
 Do **not** overwrite them — merge the changes manually.
 
-#### `CLAUDE.md`
+#### `AGENTS.md`
 
 The template version was slimmed from ~159 lines to ~60 lines. The key
 structural change: 5 doc imports were removed because they're auto-loaded
-by Claude Code anyway (agent-roster, skills-reference, hooks-reference,
+by Codex anyway (agent-roster, skills-reference, hooks-reference,
 rules-reference, review-workflow).
 
 **What to keep from your version:**
@@ -794,19 +794,19 @@ rules-reference, review-workflow).
 - Slimmer imports list (drop the 5 redundant `@` imports if present)
 - Updated collaboration protocol wording
 
-#### `.claude/docs/technical-preferences.md`
+#### `studio/docs/technical-preferences.md`
 
 If you ran `/setup-engine`, this file has your engine config, naming
 conventions, and performance budgets. Keep all of it. The template version
 is just the empty placeholder.
 
-#### `.claude/docs/templates/game-concept.md`
+#### `studio/docs/templates/game-concept.md`
 
 Minor structural update — a `## Next Steps` section was added pointing to
 `/map-systems`. Add that section to your copy if you want the updated
 guidance, but it's not required.
 
-#### `.claude/settings.json`
+#### `AGENTS.md`
 
 Check whether the new version adds any permission rules you want. The change
 was minor (schema update). If you haven't customized your `settings.json`,
@@ -815,7 +815,7 @@ overwriting is safe.
 #### Customized agent files
 
 If you've added project-specific knowledge or custom behavior to any agent
-`.md` file, do a diff and manually add the new AskUserQuestion integration
+`.md` file, do a diff and manually add the new user-decision checkpoint integration
 sections rather than overwriting. The change in each agent is a standardized
 collaborative protocol block at the end of the system prompt.
 
@@ -850,8 +850,8 @@ docs/MULTI-STAGE-DOCUMENT-WORKFLOW.md → content merged into context-management
 4. **Test hook execution** — if you're on Windows, verify the new hooks run
    without errors in Git Bash:
    ```bash
-   bash .claude/hooks/detect-gaps.sh '{}' '{}'
-   bash .claude/hooks/session-start.sh '{}' '{}'
+   bash scripts/hooks/detect-gaps.sh '{}' '{}'
+   bash scripts/hooks/session-start.sh '{}' '{}'
    ```
 
 ---

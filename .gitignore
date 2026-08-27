@@ -9,8 +9,8 @@
 Thumbs.db
 Desktop.ini
 
-# === Claude Code Local ===
-.claude/settings.local.json
+# === Codex Local ===
+AGENTS.local.md
 CLAUDE.local.md
 production/session-logs/
 
