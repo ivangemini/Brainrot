@@ -1,0 +1,42 @@
+name: Visual QA
+
+on:
+  push:
+    branches:
+      - 'codex/bread-rush-v1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/pigeon-preview.log 2>&1 &
+          echo $! > /tmp/pigeon-preview.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/pigeon-preview.log
+          exit 1
+      - name: Capture runtime
+        run: node tools/visual-qa/capture.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brainrot-runtime-screenshots
+          path: artifacts/visual-qa
+          if-no-files-found: error
