@@ -1,65 +1,55 @@
-# Active Session — Bread Rush Vertical Slice
+# Active Session — Generated Art Runtime Integration
 
 > Updated: 2026-08-27
-> Working branch: `codex/bread-rush-v1`
-> Task: Finish and verify the first Pigeon Event and show real runtime presentation.
+> Working branch: `codex/generated-art-runtime-v2`
+> Task: Replace the rejected procedural/shape-based presentation with generated raster production art and verify it in the real runtime.
 
 ## Completed
 
-- First playable clicker foundation remains intact: Feathers, six upgrade branches, Total Upgrade Level, Growth stages, combo/crit/passive/automation, local save and offline income.
-- Portal boundary is live: generic web fallback, Yandex adapter, LoadingAPI ready signal after Phaser scene readiness, gameplay start/stop lifecycle, rewarded ads and idempotent reward transactions.
-- Raster-only production rule remains enforced; no SVG production art is permitted.
-- Added Bread Rush as the first playable Pigeon Event:
-  - unlock at Total Lv 90;
-  - 3 second countdown;
-  - 30 seconds of active gameplay;
-  - normal and golden bread targets;
-  - touch-friendly moving targets with bounded lifetimes;
-  - main clicker simulation pauses while the event is active;
-  - event time advances only from the authoritative active-gameplay clock;
-  - background/ad pause therefore does not consume the event timer;
-  - economy-scaled base reward is secured before any ad offer;
-  - optional rewarded 2x uses a separate idempotent transaction;
-  - personal best, run count and six-minute active-play cooldown persist in the save.
-- Added deterministic Bread Rush raster textures and a refinement pass for the pigeon/park raster pack.
-- Added desktop/mobile/browser runtime visual QA using Playwright + Chromium.
-- Browser QA now asserts that Bread Rush leaves countdown and its active timer actually decreases, preventing the runtime clock regression found during this pass.
+- Preserved the playable systems: Feathers, six upgrade branches, Total Upgrade Level, Growth, combo/crit/passive/automation, save/offline, platform/rewarded layer and Bread Rush.
+- Replaced the old shape-composed pigeon/world presentation in `MainScene` with generated production raster art:
+  - `public/assets/generated/main_scene_hero.webp`;
+  - real feather/material detail, sunglasses, gold beak/chain and detailed park/city environment;
+  - no SVG or vector fallback;
+  - tap hit testing, floating payout feedback, camera impact and Growth ceremony remain live Phaser behavior.
+- Growth now changes generated-art framing/zoom instead of swapping old procedural body/beak/wing shapes.
+- Reworked `BreadRushScene` to use the generated hero scene full-screen while keeping targets, timer and scoring interactive.
+- Added generated raster bread target `public/assets/generated/bread_target.png`; golden bread is a runtime-tinted variant.
+- Removed the Bread Rush desktop dead strip by making the event scene cover the full viewport.
+- Visual QA permanently covers `codex/generated-art-runtime-v2` and `main` in addition to the original event branch.
 
 ## Verification Evidence
 
-Gameplay/browser code SHA `fa5e18ac7512e548759597ca397435bafc45a5b7`:
+Runtime SHA `36713f0e84a998601f39ee6793909f4cbd6b18e6`:
 
-- GitHub Actions CI run `33089332158`: PASS.
+- CI run `33098008679`: PASS.
   - raster generation: PASS;
   - raster-only / no-SVG gate: PASS;
-  - Vitest suite: PASS;
-  - strict TypeScript production compile: PASS;
+  - Vitest: 5 files / 21 tests PASS;
+  - strict TypeScript compile: PASS;
   - Vite production build: PASS.
-- Browser Visual QA run `33089332177`: PASS.
-  - production preview booted in Chromium;
-  - desktop main screen captured at 1440x900;
-  - mobile main screen captured at 390x844;
-  - Total Lv 90 event-ready state captured;
-  - active Bread Rush captured after countdown;
-  - active timer assertion passed;
+- Browser Visual QA run `33098008711`: PASS.
+  - desktop main 1440x900: captured;
+  - mobile main 390x844: captured;
+  - event-ready state: captured;
+  - active Bread Rush after countdown: captured;
+  - Bread Rush clock assertion: PASS;
   - console/page errors: none.
-
-Session-state documentation commit CI run `33089543876`: PASS.
+- Final screenshot review confirmed the old right-side Bread Rush dead strip is gone and the event target is generated raster art rather than the rejected flat procedural bread.
 
 ## Current Visual Status
 
-- Runtime is now visibly game-like and responsive rather than an empty systems scaffold.
-- Pigeon and environment are generated raster PNG assets with texture/shading/detail refinement; the runtime does not rely on SVG character/environment art.
-- Current raster pack is still an early production pass. Future art passes should replace/refine individual raster layers without changing the gameplay contracts or reverting to vector placeholders.
+- The primary runtime now uses the approved generated-raster visual direction rather than PNGs painted from geometric primitives.
+- Main screen and Bread Rush share a coherent detailed pigeon/park art target while gameplay/UI remain live and responsive.
+- The current hero is one production visual state. Future Growth and Mutation work should add additional generated raster states rather than reintroducing procedural character construction.
 
 ## Next
 
-1. Continue progression/content depth after the verified Bread Rush slice.
-2. Implement the first Mutation choice and persist its modifiers/visual mapping.
-3. Add the second MVP Pigeon Event (Pigeon Drop) after Mutation is stable.
-4. Continue production raster art expansion for additional Growth/mutation states.
-5. Add audio/game-feel and broader portal QA before release readiness.
+1. Implement the first Mutation choice with generated raster mutation states and persistent modifiers.
+2. Expand generated art across additional Growth milestones so physical progression changes silhouette/materials as well as framing.
+3. Continue event/content depth after Mutation is stable.
+4. Add audio/game-feel and broader portal QA before release readiness.
 
 ## Blockers
 
-None for continued development. The project is a verified first playable vertical slice, not yet a release-complete game.
+None for continued development. The generated-art runtime pass is complete and verified; the overall game is not yet release-complete.
