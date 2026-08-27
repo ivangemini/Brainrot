@@ -3,7 +3,7 @@ import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
-import { getCenteredHeroBox, getHeroSafeRect, rectContainsBounds } from './hero-layout';
+import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
 const BACKGROUND_TEXTURE = 'meme-pigeon-background';
@@ -38,8 +38,8 @@ export class MainScene extends Phaser.Scene {
     this.background = this.add.image(0, 0, BACKGROUND_TEXTURE)
       .setOrigin(0.5)
       .setDepth(-20)
-      .setTint(0x56818b)
-      .setAlpha(0.64);
+      .setTint(0x477782)
+      .setAlpha(0.58);
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
 
@@ -76,30 +76,21 @@ export class MainScene extends Phaser.Scene {
       ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
       : 0;
 
-    // Decorative world can sit behind glass UI; the readable hero silhouette cannot.
+    // Decorative copy fills the viewport and is deliberately subdued. The sharp
+    // reference sits above it with the *pigeon silhouette* centered, removing the
+    // old small-card-on-blurred-duplicate look.
     const backgroundScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
     this.background.setPosition(centerX, centerY).setScale(backgroundScale);
 
-    // Hero-first composition: actual screen center, never shifted around by panels.
-    const centeredBox = getCenteredHeroBox(width, height);
-    const fitScale = Math.min(
-      (centeredBox.width * 0.9) / this.hero.width,
-      (centeredBox.height * 0.9) / this.hero.height,
-    );
-    const growthScale = Math.min(1, 0.76 + Math.min(stageId, 7) * 0.035);
-    this.heroBaseScale = fitScale * growthScale;
-    this.hero.setPosition(centerX, centerY).setScale(this.heroBaseScale).setAngle(0);
+    const placement = getMemePigeonScenePlacement(width, height, this.hero.width, this.hero.height, stageId);
+    this.heroBaseScale = placement.scale;
+    this.hero.setPosition(placement.x, placement.y).setScale(this.heroBaseScale).setAngle(0);
 
-    const heroBounds = {
-      x: centerX - this.hero.displayWidth / 2,
-      y: centerY - this.hero.displayHeight / 2,
-      width: this.hero.displayWidth,
-      height: this.hero.displayHeight,
-    };
     const safeRect = getHeroSafeRect(width, height);
-    this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, heroBounds, 2));
+    this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, placement.silhouetteBounds, 2));
     this.game.canvas.dataset.heroCentered = String(
-      Math.abs(this.hero.x - centerX) <= 1 && Math.abs(this.hero.y - centerY) <= 1,
+      Math.abs(placement.silhouetteBounds.x + placement.silhouetteBounds.width / 2 - centerX) <= 1
+      && Math.abs(placement.silhouetteBounds.y + placement.silhouetteBounds.height / 2 - centerY) <= 1,
     );
   }
 
@@ -122,14 +113,20 @@ export class MainScene extends Phaser.Scene {
 
   private isPointerOnPigeon(x: number, y: number): boolean {
     if (!this.hero) return false;
-    // Reference crop keeps the meme pigeon centered; use an ellipse around its body,
-    // not the full raster rectangle/background.
-    const pigeonCenterX = this.hero.x;
-    const pigeonCenterY = this.hero.y + this.hero.displayHeight * 0.08;
-    const radiusX = this.hero.displayWidth * 0.29;
-    const radiusY = this.hero.displayHeight * 0.36;
-    const dx = (x - pigeonCenterX) / radiusX;
-    const dy = (y - pigeonCenterY) / radiusY;
+    const placement = getMemePigeonScenePlacement(
+      this.scale.width,
+      this.scale.height,
+      this.hero.width,
+      this.hero.height,
+      this.lastGrowthStage,
+    );
+    const bounds = placement.silhouetteBounds;
+    const centerX = bounds.x + bounds.width / 2;
+    const centerY = bounds.y + bounds.height * 0.53;
+    const radiusX = bounds.width * 0.48;
+    const radiusY = bounds.height * 0.49;
+    const dx = (x - centerX) / radiusX;
+    const dy = (y - centerY) / radiusY;
     return dx * dx + dy * dy <= 1;
   }
 
@@ -153,12 +150,12 @@ export class MainScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.hero);
     this.tweens.add({
       targets: this.hero,
-      scaleX: this.heroBaseScale * 1.025,
-      scaleY: this.heroBaseScale * 0.975,
+      scaleX: this.heroBaseScale * 1.018,
+      scaleY: this.heroBaseScale * 0.982,
       duration: 64,
       yoyo: true,
       ease: 'Quad.Out',
-      onComplete: () => this.hero?.setScale(this.heroBaseScale),
+      onComplete: () => this.layout(),
     });
 
     const text = this.add.text(
@@ -195,15 +192,12 @@ export class MainScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.hero);
     this.tweens.add({
       targets: this.hero,
-      scaleX: this.heroBaseScale * 1.04,
-      scaleY: this.heroBaseScale * 1.04,
+      scaleX: this.heroBaseScale * 1.025,
+      scaleY: this.heroBaseScale * 1.025,
       duration: 180,
       yoyo: true,
       ease: 'Quad.Out',
-      onComplete: () => {
-        this.hero?.setScale(this.heroBaseScale);
-        this.layout();
-      },
+      onComplete: () => this.layout(),
     });
 
     const label = this.add.text(width / 2, height * 0.24, stageName.toUpperCase(), {
