@@ -1,11 +1,15 @@
 import './styles.css';
 import './reward.css';
+import './bread-rush.css';
 import { GameStore } from './domain/game-store';
+import { BreadRushService, type BreadRushResult, type BreadRushRunContext } from './events/bread-rush-service';
 import { MonetizationService } from './monetization/monetization-service';
 import { loadGame, saveGame } from './persistence/save-service';
 import { createPlatformAdapter } from './platform/create-platform-adapter';
 import { GameplayLifecycle } from './platform/gameplay-lifecycle';
+import { BreadRushScene } from './presentation/bread-rush-scene';
 import { createPhaserGame } from './presentation/create-phaser-game';
+import { createBreadRushUi } from './ui/bread-rush-ui';
 import { createUiShell } from './ui/ui-shell';
 
 void bootstrap().catch((error) => {
@@ -33,6 +37,7 @@ async function bootstrap(): Promise<void> {
     saveGame(store.getSnapshot(), now);
   };
   const monetization = new MonetizationService(platform, lifecycle, store, persist);
+  const breadRushService = new BreadRushService(store, monetization, persist);
 
   let resolveSceneReady!: () => void;
   const sceneReady = new Promise<void>((resolve) => {
@@ -40,7 +45,10 @@ async function bootstrap(): Promise<void> {
   });
 
   const game = createPhaserGame('game-canvas', store, resolveSceneReady);
+  const breadRushScene = new BreadRushScene(store, () => lifecycle.isActive);
+  game.scene.add('BreadRushScene', breadRushScene, false);
   const ui = createUiShell(uiHost, store);
+  const breadRushUi = createBreadRushUi(uiHost);
 
   await sceneReady;
   await platform.signalReady();
@@ -63,11 +71,75 @@ async function bootstrap(): Promise<void> {
     onDouble: () => monetization.doubleOfflineReward(offlineTransactionId, loaded.offlineFeathers),
   });
 
+  let eventMode: 'idle' | 'active' | 'result' = 'idle';
+  let activeRun: BreadRushRunContext | null = null;
+  let activeResult: BreadRushResult | null = null;
   let lastFrame = performance.now();
   let simulationAccumulator = 0;
   let saveAccumulator = 0;
+  let offerAccumulator = 0;
   let disposed = false;
   let frameRequest = 0;
+
+  const continueFromBreadRush = (): void => {
+    if (eventMode === 'idle') return;
+    eventMode = 'idle';
+    activeRun = null;
+    activeResult = null;
+    breadRushUi.hideEvent();
+    game.scene.stop('BreadRushScene');
+    game.scene.wake('MainScene');
+    lastFrame = performance.now();
+    simulationAccumulator = 0;
+    syncEventOffer();
+  };
+
+  const showBreadRushResult = (result: BreadRushResult): void => {
+    activeResult = result;
+    eventMode = 'result';
+    breadRushUi.showResult(
+      result,
+      breadRushService.canDouble(result),
+      () => breadRushService.doubleResult(result),
+      continueFromBreadRush,
+    );
+  };
+
+  const startBreadRush = (): void => {
+    if (eventMode !== 'idle') return;
+    const context = breadRushService.startRun();
+    if (!context) {
+      syncEventOffer();
+      return;
+    }
+
+    activeRun = context;
+    activeResult = null;
+    eventMode = 'active';
+    breadRushUi.hideOffer();
+    breadRushUi.showActive();
+    game.scene.sleep('MainScene');
+    breadRushScene.configure({
+      onSnapshot: (snapshot) => breadRushUi.updateActive(snapshot),
+      onComplete: (snapshot) => {
+        if (eventMode !== 'active' || !activeRun) return;
+        showBreadRushResult(breadRushService.finishRun(activeRun, snapshot.score));
+      },
+    });
+    game.scene.start('BreadRushScene');
+    lastFrame = performance.now();
+    simulationAccumulator = 0;
+  };
+
+  function syncEventOffer(): void {
+    if (eventMode === 'idle' && breadRushService.isAvailable()) {
+      breadRushUi.showOffer(startBreadRush);
+    } else {
+      breadRushUi.hideOffer();
+    }
+  }
+
+  syncEventOffer();
 
   const frame = (now: number): void => {
     if (disposed) return;
@@ -75,12 +147,22 @@ async function bootstrap(): Promise<void> {
     lastFrame = now;
 
     if (lifecycle.isActive) {
-      simulationAccumulator += frameDelta;
       saveAccumulator += frameDelta;
+      offerAccumulator += frameDelta;
 
-      if (simulationAccumulator >= 0.1) {
-        store.tick(simulationAccumulator, now);
+      if (eventMode === 'idle') {
+        simulationAccumulator += frameDelta;
+        if (simulationAccumulator >= 0.1) {
+          store.tick(simulationAccumulator, now);
+          simulationAccumulator = 0;
+        }
+      } else {
         simulationAccumulator = 0;
+      }
+
+      if (offerAccumulator >= 0.5) {
+        offerAccumulator = 0;
+        syncEventOffer();
       }
 
       if (saveAccumulator >= 5) {
@@ -117,6 +199,7 @@ async function bootstrap(): Promise<void> {
       window.removeEventListener('pagehide', onPageHide);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       persist();
+      breadRushUi.destroy();
       ui.destroy();
       game.destroy(true);
     });
