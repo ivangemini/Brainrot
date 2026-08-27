@@ -36,24 +36,24 @@ export class MainScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    this.load.image('park-bg', '/assets/world/park_bg.webp');
-    this.load.image('pigeon-shadow', '/assets/pigeon/shadow.webp');
-    this.load.image('pigeon-nest', '/assets/pigeon/nest.webp');
-    this.load.image('pigeon-wing-1', '/assets/pigeon/wing_t1.webp');
-    this.load.image('pigeon-wing-2', '/assets/pigeon/wing_t2.webp');
-    this.load.image('pigeon-wing-3', '/assets/pigeon/wing_t3.webp');
-    this.load.image('pigeon-body-1', '/assets/pigeon/body_t1.webp');
-    this.load.image('pigeon-body-2', '/assets/pigeon/body_t2.webp');
-    this.load.image('pigeon-body-3', '/assets/pigeon/body_t3.webp');
-    this.load.image('pigeon-legs', '/assets/pigeon/legs.webp');
-    this.load.image('pigeon-head', '/assets/pigeon/head.webp');
-    this.load.image('pigeon-eyes', '/assets/pigeon/eyes.webp');
-    this.load.image('pigeon-beak-1', '/assets/pigeon/beak_t1.webp');
-    this.load.image('pigeon-beak-2', '/assets/pigeon/beak_t2.webp');
-    this.load.image('pigeon-beak-3', '/assets/pigeon/beak_t3.webp');
-    this.load.image('pigeon-glasses', '/assets/pigeon/glasses.webp');
-    this.load.image('pigeon-chain', '/assets/pigeon/chain.webp');
-    this.load.image('tap-burst', '/assets/ui/tap_burst.webp');
+    this.load.image('park-bg', '/assets/world/park_bg.png');
+    this.load.image('pigeon-shadow', '/assets/pigeon/shadow.png');
+    this.load.image('pigeon-nest', '/assets/pigeon/nest.png');
+    this.load.image('pigeon-wing-1', '/assets/pigeon/wing_t1.png');
+    this.load.image('pigeon-wing-2', '/assets/pigeon/wing_t2.png');
+    this.load.image('pigeon-wing-3', '/assets/pigeon/wing_t3.png');
+    this.load.image('pigeon-body-1', '/assets/pigeon/body_t1.png');
+    this.load.image('pigeon-body-2', '/assets/pigeon/body_t2.png');
+    this.load.image('pigeon-body-3', '/assets/pigeon/body_t3.png');
+    this.load.image('pigeon-legs', '/assets/pigeon/legs.png');
+    this.load.image('pigeon-head', '/assets/pigeon/head.png');
+    this.load.image('pigeon-eyes', '/assets/pigeon/eyes.png');
+    this.load.image('pigeon-beak-1', '/assets/pigeon/beak_t1.png');
+    this.load.image('pigeon-beak-2', '/assets/pigeon/beak_t2.png');
+    this.load.image('pigeon-beak-3', '/assets/pigeon/beak_t3.png');
+    this.load.image('pigeon-glasses', '/assets/pigeon/glasses.png');
+    this.load.image('pigeon-chain', '/assets/pigeon/chain.png');
+    this.load.image('tap-burst', '/assets/ui/tap_burst.png');
   }
 
   public create(): void {
