@@ -1,0 +1,31 @@
+name: Exact CCGS Git tree import
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import-tree:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch source Git objects
+        run: git fetch --depth=1 https://github.com/Donchitos/Claude-Code-Game-Studios.git main
+
+      - name: Commit exact source tree onto target history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SOURCE_TREE="$(git rev-parse FETCH_HEAD^{tree})"
+          echo "Source tree: $SOURCE_TREE"
+          NEW_COMMIT="$(printf '%s\n' 'chore: import exact CCGS Git tree' | git commit-tree "$SOURCE_TREE" -p HEAD)"
+          echo "New commit: $NEW_COMMIT"
+          git push origin "$NEW_COMMIT:refs/heads/main"
