@@ -3,6 +3,8 @@ import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../d
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 
+const HERO_TEXTURE = 'generated-main-hero';
+
 export interface BreadRushSceneCallbacks {
   readonly onSnapshot: (snapshot: BreadRushSnapshot) => void;
   readonly onComplete: (snapshot: BreadRushSnapshot) => void;
@@ -12,9 +14,10 @@ export class BreadRushScene extends Phaser.Scene {
   private session: BreadRushSession | undefined;
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
-  private background?: Phaser.GameObjects.Image;
-  private pigeonRoot?: Phaser.GameObjects.Container;
+  private hero?: Phaser.GameObjects.Image;
+  private heroBaseScale = 1;
   private completedSignaled = false;
+  private readonly onResize = (): void => this.layout();
 
   public constructor(
     private readonly store: GameStore,
@@ -37,14 +40,20 @@ export class BreadRushScene extends Phaser.Scene {
     this.targetSprites.clear();
     this.session = new BreadRushSession();
 
-    this.background = this.add.image(0, 0, 'park-bg').setOrigin(0.5).setTint(0xdfe7d7);
-    this.createPigeon();
-    this.scale.on('resize', () => this.layout());
+    this.hero = this.add.image(0, 0, HERO_TEXTURE)
+      .setOrigin(0.5)
+      .setTint(0xd7ddd3)
+      .setAlpha(0.94)
+      .setDepth(0);
+
+    this.scale.on('resize', this.onResize);
     this.events.once('shutdown', () => {
-      this.scale.off('resize');
+      this.scale.off('resize', this.onResize);
+      for (const sprite of this.targetSprites.values()) sprite.destroy();
       this.targetSprites.clear();
       this.session = undefined;
       this.callbacks = undefined;
+      this.hero = undefined;
     });
     this.layout();
     this.callbacks?.onSnapshot(this.session.getSnapshot());
@@ -63,36 +72,24 @@ export class BreadRushScene extends Phaser.Scene {
     }
   }
 
-  private createPigeon(): void {
-    const state = this.store.getSnapshot();
-    const stage = getGrowthStage(getTotalUpgradeLevel(state.branchLevels));
-    const beakTier = state.branchLevels.beak >= 25 ? 3 : state.branchLevels.beak >= 5 ? 2 : 1;
-    const wingTier = state.branchLevels.wings >= 25 ? 3 : state.branchLevels.wings >= 5 ? 2 : 1;
-    const root = this.add.container(0, 0);
-    root.add([
-      this.add.image(0, 0, 'pigeon-shadow'),
-      this.add.image(0, 0, `pigeon-wing-${wingTier}`),
-      this.add.image(0, 0, `pigeon-body-${stage.bodyTier}`),
-      this.add.image(0, 0, 'pigeon-legs'),
-      this.add.image(0, 0, 'pigeon-head'),
-      this.add.image(0, 0, 'pigeon-eyes'),
-      this.add.image(0, 0, `pigeon-beak-${beakTier}`),
-    ]);
-    this.pigeonRoot = root;
-  }
-
   private layout(): void {
     const width = this.scale.width;
     const height = this.scale.height;
-    if (this.background) {
-      this.background.setPosition(width / 2, height / 2);
-      this.background.setScale(Math.max(width / 1600, height / 1000));
+    const portrait = height > width;
+    const sceneWidth = portrait ? width : width * 0.77;
+    const sceneHeight = portrait ? height * 0.68 : height;
+
+    if (this.hero) {
+      const state = this.store.getSnapshot();
+      const stageId = getGrowthStage(getTotalUpgradeLevel(state.branchLevels)).id;
+      const coverScale = Math.max(sceneWidth / this.hero.width, sceneHeight / this.hero.height);
+      this.heroBaseScale = coverScale * (1 + Math.min(stageId, 6) * 0.012);
+      this.hero
+        .setPosition(sceneWidth / 2, sceneHeight / 2)
+        .setScale(this.heroBaseScale)
+        .setAngle(0);
     }
-    if (this.pigeonRoot) {
-      const scale = Math.min(width, height) / 768 * (height > width ? 0.46 : 0.42);
-      this.pigeonRoot.setPosition(width * 0.5, height * (height > width ? 0.72 : 0.76));
-      this.pigeonRoot.setScale(scale);
-    }
+
     const snapshot = this.session?.getSnapshot();
     if (snapshot) this.syncTargets(snapshot.targets);
   }
@@ -115,15 +112,16 @@ export class BreadRushScene extends Phaser.Scene {
         sprite.setData('targetId', target.id);
         sprite.on('pointerdown', () => this.collectTarget(target.id));
         this.targetSprites.set(target.id, sprite);
-        this.tweens.add({ targets: sprite, scaleX: { from: 0.5, to: 1 }, scaleY: { from: 0.5, to: 1 }, duration: 120 });
+        sprite.setScale(0.7);
+        this.tweens.add({ targets: sprite, scale: 1, duration: 120, ease: 'Back.Out' });
       }
 
       const { x, y } = this.toScreen(target.x, target.y);
-      const targetSize = Math.max(70, Math.min(108, Math.min(this.scale.width, this.scale.height) * 0.13));
+      const targetSize = Math.max(70, Math.min(112, Math.min(this.scale.width, this.scale.height) * 0.13));
       sprite.setPosition(x, y);
       sprite.setDisplaySize(targetSize * (target.kind === 'golden' ? 1.08 : 1), targetSize * 0.72);
       const lifeRatio = Math.max(0, 1 - target.ageSeconds / target.lifetimeSeconds);
-      sprite.setAlpha(0.55 + lifeRatio * 0.45);
+      sprite.setAlpha(0.62 + lifeRatio * 0.38);
       sprite.setAngle(Math.sin(target.ageSeconds * 5 + target.id) * 6);
     }
   }
@@ -146,7 +144,7 @@ export class BreadRushScene extends Phaser.Scene {
       });
     }
 
-    this.playPigeonReach(target);
+    this.playCollectFeedback(result.kind === 'golden');
     const { x, y } = this.toScreen(target.x, target.y);
     const scoreText = this.add.text(x, y - 30, `+${result.points}`, {
       fontFamily: 'system-ui, sans-serif',
@@ -166,20 +164,18 @@ export class BreadRushScene extends Phaser.Scene {
     this.callbacks?.onSnapshot(this.session.getSnapshot());
   }
 
-  private playPigeonReach(target: BreadTarget): void {
-    if (!this.pigeonRoot) return;
-    const { x } = this.toScreen(target.x, target.y);
-    const baseX = this.scale.width * 0.5;
-    const reach = Math.max(-42, Math.min(42, (x - baseX) * 0.08));
-    this.tweens.killTweensOf(this.pigeonRoot);
+  private playCollectFeedback(golden: boolean): void {
+    this.cameras.main.shake(golden ? 110 : 55, golden ? 0.0015 : 0.0006);
+    if (!this.hero) return;
+    this.tweens.killTweensOf(this.hero);
     this.tweens.add({
-      targets: this.pigeonRoot,
-      x: baseX + reach,
-      y: this.pigeonRoot.y - 16,
-      angle: reach * 0.05,
+      targets: this.hero,
+      scaleX: this.heroBaseScale * (golden ? 1.018 : 1.008),
+      scaleY: this.heroBaseScale * (golden ? 1.018 : 1.008),
       duration: 70,
       yoyo: true,
       ease: 'Quad.Out',
+      onComplete: () => this.hero?.setScale(this.heroBaseScale),
     });
   }
 
@@ -187,10 +183,12 @@ export class BreadRushScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
     const portrait = height > width;
-    const left = width * 0.08;
-    const right = width * 0.92;
-    const top = height * (portrait ? 0.18 : 0.16);
-    const bottom = height * (portrait ? 0.59 : 0.66);
+    const sceneWidth = portrait ? width : width * 0.77;
+    const sceneHeight = portrait ? height * 0.68 : height;
+    const left = sceneWidth * 0.06;
+    const right = sceneWidth * (portrait ? 0.94 : 0.91);
+    const top = sceneHeight * (portrait ? 0.18 : 0.16);
+    const bottom = sceneHeight * (portrait ? 0.82 : 0.84);
     return {
       x: left + xNorm * (right - left),
       y: top + yNorm * (bottom - top),
