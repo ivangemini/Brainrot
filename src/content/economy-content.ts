@@ -25,7 +25,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   beak: {
     id: 'beak',
     name: 'Beak',
-    icon: '/assets/ui/beak.webp',
+    icon: '/assets/ui/beak.png',
     unlockTotalLevel: 0,
     baseCost: 15,
     costGrowth: 1.18,
@@ -36,7 +36,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   body: {
     id: 'body',
     name: 'Body',
-    icon: '/assets/ui/body.webp',
+    icon: '/assets/ui/body.png',
     unlockTotalLevel: 10,
     baseCost: 70,
     costGrowth: 1.20,
@@ -47,7 +47,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   nest: {
     id: 'nest',
     name: 'Nest',
-    icon: '/assets/ui/nest.webp',
+    icon: '/assets/ui/nest.png',
     unlockTotalLevel: 20,
     baseCost: 160,
     costGrowth: 1.18,
@@ -58,7 +58,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   wings: {
     id: 'wings',
     name: 'Wings',
-    icon: '/assets/ui/wings.webp',
+    icon: '/assets/ui/wings.png',
     unlockTotalLevel: 30,
     baseCost: 400,
     costGrowth: 1.19,
@@ -69,7 +69,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   swag: {
     id: 'swag',
     name: 'Swag',
-    icon: '/assets/ui/swag.webp',
+    icon: '/assets/ui/swag.png',
     unlockTotalLevel: 45,
     baseCost: 950,
     costGrowth: 1.20,
@@ -80,7 +80,7 @@ export const UPGRADE_DEFINITIONS: Record<UpgradeBranchId, UpgradeDefinition> = {
   brain: {
     id: 'brain',
     name: 'Brain',
-    icon: '/assets/ui/brain.webp',
+    icon: '/assets/ui/brain.png',
     unlockTotalLevel: 65,
     baseCost: 2500,
     costGrowth: 1.20,
