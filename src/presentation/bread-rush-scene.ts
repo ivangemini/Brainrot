@@ -50,9 +50,10 @@ export class BreadRushScene extends Phaser.Scene {
     this.callbacks?.onSnapshot(this.session.getSnapshot());
   }
 
-  public update(_time: number, deltaMs: number): void {
+  /** Advance only from the app's authoritative ActiveGameplayClock. */
+  public advanceActiveTime(deltaSeconds: number): void {
     if (!this.session || !this.isGameplayActive()) return;
-    const snapshot = this.session.tick(deltaMs / 1000);
+    const snapshot = this.session.tick(deltaSeconds);
     this.syncTargets(snapshot.targets);
     this.callbacks?.onSnapshot(snapshot);
 
