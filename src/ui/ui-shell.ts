@@ -26,7 +26,7 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
   root.innerHTML = `
     <header class="top-hud">
       <div class="currency-card glass-panel">
-        <img src="/assets/ui/feather.webp" alt="" />
+        <img src="/assets/ui/feather.png" alt="" />
         <div>
           <span class="eyebrow">FEATHERS</span>
           <strong id="feather-total">0</strong>
