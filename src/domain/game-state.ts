@@ -11,6 +11,7 @@ export interface GameState {
   saveRevision: number;
   lastSavedAt: number;
   discoveredGrowthStages: number[];
+  appliedRewardIds: string[];
 }
 
 export function createNewGameState(now = Date.now()): GameState {
@@ -24,6 +25,7 @@ export function createNewGameState(now = Date.now()): GameState {
     saveRevision: 0,
     lastSavedAt: now,
     discoveredGrowthStages: [0],
+    appliedRewardIds: [],
   };
 }
 
@@ -32,6 +34,7 @@ export function cloneState(state: GameState): GameState {
     ...state,
     branchLevels: { ...state.branchLevels },
     discoveredGrowthStages: [...state.discoveredGrowthStages],
+    appliedRewardIds: [...state.appliedRewardIds],
   };
 }
 
