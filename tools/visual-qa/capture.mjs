@@ -58,6 +58,14 @@ await eventPage.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullP
 await eventPage.click('.bread-rush-offer');
 await eventPage.waitForSelector('.bread-rush-hud:not([hidden])');
 await eventPage.waitForTimeout(3600);
+
+const timeText = await eventPage.locator('.bread-rush-time strong').textContent();
+const timeRemaining = Number(timeText);
+const countdownVisible = await eventPage.locator('.bread-rush-countdown').evaluate((element) => element.classList.contains('visible'));
+if (!Number.isFinite(timeRemaining) || timeRemaining >= 29.8 || countdownVisible) {
+  issues.push(`event: Bread Rush clock did not advance correctly (time=${timeText}, countdownVisible=${countdownVisible})`);
+}
+
 await eventPage.screenshot({ path: `${outputDir}/desktop-bread-rush.png`, fullPage: true });
 await eventPage.close();
 await eventContext.close();
@@ -65,6 +73,7 @@ await eventContext.close();
 const summary = {
   url: baseURL,
   issues,
+  eventTimeRemaining: Number.isFinite(timeRemaining) ? timeRemaining : null,
   screenshots: ['desktop-main.png', 'mobile-main.png', 'desktop-event-ready.png', 'desktop-bread-rush.png'],
 };
 writeFileSync(`${outputDir}/report.json`, JSON.stringify(summary, null, 2));
