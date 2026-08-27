@@ -5,6 +5,7 @@ on:
     branches:
       - 'codex/bread-rush-v1'
       - 'codex/generated-art-runtime-v2'
+      - 'codex/meme-pigeon-hero-v1'
       - main
   workflow_dispatch:
 
