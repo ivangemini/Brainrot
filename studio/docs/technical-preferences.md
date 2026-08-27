@@ -9,7 +9,7 @@
 - **Engine**: Phaser 4.2.1
 - **Language**: TypeScript (strict mode)
 - **Bundler / Dev Server**: Vite
-- **Rendering**: Phaser WebGL scene for world/pigeon/VFX/minigames + HTML/CSS DOM overlay for primary UI
+- **Rendering**: Phaser WebGL scene for world/pigeon/raster VFX/minigames + HTML/CSS DOM overlay for primary UI
 - **Physics**: No general-purpose physics dependency for the core clicker. Use deterministic lightweight geometry/collision for minigames unless a concrete feature justifies more.
 
 ## Input & Platform
@@ -51,13 +51,14 @@
 - **Atlas pages**: prefer <=2048×2048 per page
 - **Late content**: lazy-load before first required use
 
-These are engineering targets, not portal guarantees. Profile on representative mobile hardware before release.
+The first CI-verified code bundle is ~1.39 MB minified / ~365 KB gzip before raster textures. Phaser is currently the dominant chunk; code splitting is a later optimization, not a blocker for the first playable.
 
 ## Testing
 
 - **Unit / deterministic logic**: Vitest
 - **Browser / integration / responsive smoke**: Playwright
 - **Balance simulation**: deterministic scripts under `tools/balance/`
+- **CI**: Node 24, deterministic raster generation, raster-only contract check, unit tests, TypeScript compile, Vite production build
 - **Minimum expectation**:
   - economy formulas and purchase rules: automated tests;
   - save migrations: fixture tests;
@@ -75,6 +76,7 @@ These are engineering targets, not portal guarantees. Profile on representative 
 5. **Save schema is versioned from day one** — migrations are explicit and tested.
 6. **Reward transactions are idempotent** — ad retries/callback duplication cannot duplicate rewards.
 7. **Graceful degradation** — analytics, ads and cloud APIs may fail without breaking the base game.
+8. **Generated raster only** — player-facing illustrated production assets are PNG/WebP textures or raster atlases, never SVG/vector substitutes.
 
 ## Forbidden Patterns
 
@@ -85,7 +87,8 @@ These are engineering targets, not portal guarantees. Profile on representative 
 - awarding rewarded-ad benefits before confirmed completion;
 - timers based only on `Date.now()` without clock/offline validation boundaries;
 - loading all future growth/zone art at initial boot;
-- SVG-heavy placeholder world art presented as production implementation;
+- **any SVG player-facing production art, including icons/logos**;
+- CSS/canvas/vector primitives used as replacement illustrated art for pigeon/world/props/accessories/icons/VFX;
 - irreversible save-schema changes without a migration path.
 
 ## Allowed Libraries / Tooling
@@ -120,15 +123,23 @@ Exact signatures are finalized by ADR/architecture work; this section records th
 ## Rendering / Art Pipeline
 
 - layered pigeon composition with canonical pivots/anchors;
-- transparent WebP runtime art; PNG masters where needed;
-- texture atlases for small repeated assets;
-- procedural/tween animation for frequent reactions;
-- major growth stages use body/silhouette tiers, not only uniform scaling;
-- DOM UI remains visually integrated with the Art Bible but separate from world rendering.
+- **generated raster PNG/WebP only** for pigeon, world, props, accessories, illustrated UI icons and production VFX;
+- first playable generates 25 PNG textures deterministically with `tools/art/generate-raster-assets.mjs` before dev/build;
+- production replacements may use higher-fidelity generated PNG masters and WebP runtime exports for compression;
+- raster texture atlases for small repeated assets as the pack grows;
+- tween/procedural **motion** may animate raster layers but does not replace asset art;
+- major growth stages use body/silhouette raster tiers, not only uniform scaling;
+- DOM/CSS is limited to UI layout, typography and panel geometry; it is not an illustration pipeline;
+- SVG is forbidden from the player-facing production asset pipeline.
 
 ## Architecture Decisions Log
 
-- Pending formal ADRs after MVP GDD set is authored.
+- ADR-0001: Phaser + DOM split.
+- ADR-0002: Authoritative GameStore.
+- ADR-0003: Tuning / EconomyNumber boundary.
+- ADR-0004: Platform Adapter boundary.
+- ADR-0005: Save/offline contract.
+- ADR-0006: Layered generated-raster pigeon composition.
 - Current platform research: `docs/architecture/platform-research.md`.
 
 ## Engine Specialists / Role Routing
@@ -150,7 +161,7 @@ The imported engine-specific Unity/Godot/Unreal profiles do not govern this web 
 | TypeScript game/domain (`.ts`) | gameplay-programmer / lead-programmer as appropriate |
 | Phaser rendering/scene (`.ts`) | gameplay-programmer + technical-artist |
 | HTML/CSS UI | ui-programmer + ux-designer |
-| Shaders/filters | technical-artist |
+| Raster art / texture pipeline | technical-artist + art-director |
 | Balance/config data | economy-designer + systems-designer |
 | Platform adapters | lead-programmer + security-engineer where relevant |
 | Architecture | technical-director |
