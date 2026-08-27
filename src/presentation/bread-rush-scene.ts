@@ -14,7 +14,7 @@ export class BreadRushScene extends Phaser.Scene {
   private session: BreadRushSession | undefined;
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
-  private hero?: Phaser.GameObjects.Image;
+  private hero: Phaser.GameObjects.Image | undefined;
   private heroBaseScale = 1;
   private completedSignaled = false;
   private readonly onResize = (): void => this.layout();
