@@ -4,6 +4,9 @@ import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas
 import type { GameStore } from '../domain/game-store';
 
 const HERO_TEXTURE = 'generated-main-hero';
+const HERO_PATH = '/assets/generated/main_scene_hero.webp';
+const BREAD_TEXTURE = 'generated-bread-target';
+const BREAD_PATH = '/assets/generated/bread_target.png';
 
 export interface BreadRushSceneCallbacks {
   readonly onSnapshot: (snapshot: BreadRushSnapshot) => void;
@@ -31,8 +34,8 @@ export class BreadRushScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    this.load.image('event-bread-normal', '/assets/events/bread_normal.png');
-    this.load.image('event-bread-golden', '/assets/events/bread_golden.png');
+    if (!this.textures.exists(HERO_TEXTURE)) this.load.image(HERO_TEXTURE, HERO_PATH);
+    this.load.image(BREAD_TEXTURE, BREAD_PATH);
   }
 
   public create(): void {
@@ -75,17 +78,14 @@ export class BreadRushScene extends Phaser.Scene {
   private layout(): void {
     const width = this.scale.width;
     const height = this.scale.height;
-    const portrait = height > width;
-    const sceneWidth = portrait ? width : width * 0.77;
-    const sceneHeight = portrait ? height * 0.68 : height;
 
     if (this.hero) {
       const state = this.store.getSnapshot();
       const stageId = getGrowthStage(getTotalUpgradeLevel(state.branchLevels)).id;
-      const coverScale = Math.max(sceneWidth / this.hero.width, sceneHeight / this.hero.height);
+      const coverScale = Math.max(width / this.hero.width, height / this.hero.height);
       this.heroBaseScale = coverScale * (1 + Math.min(stageId, 6) * 0.012);
       this.hero
-        .setPosition(sceneWidth / 2, sceneHeight / 2)
+        .setPosition(width / 2, height / 2)
         .setScale(this.heroBaseScale)
         .setAngle(0);
     }
@@ -106,22 +106,23 @@ export class BreadRushScene extends Phaser.Scene {
     for (const target of targets) {
       let sprite = this.targetSprites.get(target.id);
       if (!sprite) {
-        sprite = this.add.image(0, 0, target.kind === 'golden' ? 'event-bread-golden' : 'event-bread-normal')
+        sprite = this.add.image(0, 0, BREAD_TEXTURE)
           .setDepth(40)
           .setInteractive({ useHandCursor: true });
+        if (target.kind === 'golden') sprite.setTint(0xffd84f);
         sprite.setData('targetId', target.id);
         sprite.on('pointerdown', () => this.collectTarget(target.id));
         this.targetSprites.set(target.id, sprite);
-        sprite.setScale(0.7);
+        sprite.setScale(0.72);
         this.tweens.add({ targets: sprite, scale: 1, duration: 120, ease: 'Back.Out' });
       }
 
       const { x, y } = this.toScreen(target.x, target.y);
-      const targetSize = Math.max(70, Math.min(112, Math.min(this.scale.width, this.scale.height) * 0.13));
+      const targetSize = Math.max(72, Math.min(118, Math.min(this.scale.width, this.scale.height) * 0.135));
       sprite.setPosition(x, y);
-      sprite.setDisplaySize(targetSize * (target.kind === 'golden' ? 1.08 : 1), targetSize * 0.72);
+      sprite.setDisplaySize(targetSize * (target.kind === 'golden' ? 1.1 : 1), targetSize * 0.72);
       const lifeRatio = Math.max(0, 1 - target.ageSeconds / target.lifetimeSeconds);
-      sprite.setAlpha(0.62 + lifeRatio * 0.38);
+      sprite.setAlpha(0.68 + lifeRatio * 0.32);
       sprite.setAngle(Math.sin(target.ageSeconds * 5 + target.id) * 6);
     }
   }
@@ -183,12 +184,10 @@ export class BreadRushScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
     const portrait = height > width;
-    const sceneWidth = portrait ? width : width * 0.77;
-    const sceneHeight = portrait ? height * 0.68 : height;
-    const left = sceneWidth * 0.06;
-    const right = sceneWidth * (portrait ? 0.94 : 0.91);
-    const top = sceneHeight * (portrait ? 0.18 : 0.16);
-    const bottom = sceneHeight * (portrait ? 0.82 : 0.84);
+    const left = width * 0.06;
+    const right = width * 0.94;
+    const top = height * (portrait ? 0.16 : 0.14);
+    const bottom = height * (portrait ? 0.78 : 0.86);
     return {
       x: left + xNorm * (right - left),
       y: top + yNorm * (bottom - top),
