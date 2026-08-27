@@ -15,11 +15,27 @@ function attachIssueListeners(page, label) {
   page.on('pageerror', (error) => issues.push(`${label}: pageerror: ${error.message}`));
 }
 
+async function assertHeroContract(page, label) {
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('#game-canvas canvas');
+    return canvas?.dataset.heroCentered && canvas?.dataset.heroSafe;
+  }, { timeout: 8000 });
+
+  const result = await page.locator('#game-canvas canvas').evaluate((canvas) => ({
+    centered: canvas.dataset.heroCentered,
+    safe: canvas.dataset.heroSafe,
+  }));
+
+  if (result.centered !== 'true') issues.push(`${label}: hero is not centered on the viewport`);
+  if (result.safe !== 'true') issues.push(`${label}: hero overlaps a reserved UI zone`);
+}
+
 async function openPage(viewport, label) {
   const page = await browser.newPage({ viewport });
   attachIssueListeners(page, label);
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.waitForSelector('#game-canvas canvas', { state: 'visible' });
+  await assertHeroContract(page, label);
   return page;
 }
 
@@ -53,11 +69,13 @@ const eventPage = await eventContext.newPage();
 attachIssueListeners(eventPage, 'event');
 await eventPage.goto(baseURL, { waitUntil: 'networkidle' });
 await eventPage.waitForSelector('#game-canvas canvas', { state: 'visible' });
+await assertHeroContract(eventPage, 'event-ready');
 await eventPage.waitForSelector('.bread-rush-offer:not([hidden])', { timeout: 8000 });
 await eventPage.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullPage: true });
 await eventPage.click('.bread-rush-offer');
 await eventPage.waitForSelector('.bread-rush-hud:not([hidden])');
 await eventPage.waitForTimeout(3600);
+await assertHeroContract(eventPage, 'bread-rush');
 
 const timeText = await eventPage.locator('.bread-rush-time strong').textContent();
 const timeRemaining = Number(timeText);
