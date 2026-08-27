@@ -1,9 +1,19 @@
 /* Hero-first layout overrides.
    The meme pigeon owns the visual center. UI must route around it, never over it. */
 
+/* The onboarding hint belongs to the reserved strip below the HUD, never on the
+   face/head of the centered pigeon. */
+.tap-hint {
+  top: 106px;
+}
+
 @media (max-width: 900px) and (orientation: portrait) {
   .upgrade-panel {
     max-height: min(26vh, 220px);
+  }
+
+  .tap-hint {
+    top: max(82px, calc(env(safe-area-inset-top) + 74px));
   }
 }
 
@@ -27,6 +37,11 @@
 
   .upgrade-card {
     min-height: 88px;
+  }
+
+  .tap-hint {
+    top: max(78px, calc(env(safe-area-inset-top) + 70px));
+    padding: 7px 12px;
   }
 }
 
