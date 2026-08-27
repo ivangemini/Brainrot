@@ -3,7 +3,12 @@ import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../domain/bread-rush';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
-import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
+import {
+  getHeroSafeRect,
+  getMemePigeonFocalPosition,
+  getMemePigeonScenePlacement,
+  rectContainsBounds,
+} from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
 const EVENT_BACKGROUND_TEXTURE = 'meme-pigeon-event-background';
@@ -49,8 +54,8 @@ export class BreadRushScene extends Phaser.Scene {
 
     this.background = this.add.image(0, 0, EVENT_BACKGROUND_TEXTURE)
       .setOrigin(0.5)
-      .setTint(0x477782)
-      .setAlpha(0.54)
+      .setTint(0x7f9794)
+      .setAlpha(0.74)
       .setDepth(-20);
     this.hero = this.add.image(0, 0, HERO_TEXTURE)
       .setOrigin(0.5)
@@ -91,7 +96,14 @@ export class BreadRushScene extends Phaser.Scene {
 
     if (this.background) {
       const coverScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
-      this.background.setPosition(centerX, centerY).setScale(coverScale);
+      const backgroundPosition = getMemePigeonFocalPosition(
+        width,
+        height,
+        this.background.width,
+        this.background.height,
+        coverScale,
+      );
+      this.background.setPosition(backgroundPosition.x, backgroundPosition.y).setScale(coverScale);
     }
 
     if (this.hero) {
