@@ -3,7 +3,12 @@ import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
-import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
+import {
+  getHeroSafeRect,
+  getMemePigeonFocalPosition,
+  getMemePigeonScenePlacement,
+  rectContainsBounds,
+} from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
 const BACKGROUND_TEXTURE = 'meme-pigeon-background';
@@ -38,8 +43,8 @@ export class MainScene extends Phaser.Scene {
     this.background = this.add.image(0, 0, BACKGROUND_TEXTURE)
       .setOrigin(0.5)
       .setDepth(-20)
-      .setTint(0x477782)
-      .setAlpha(0.58);
+      .setTint(0x7f9794)
+      .setAlpha(0.78);
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
 
@@ -76,11 +81,15 @@ export class MainScene extends Phaser.Scene {
       ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
       : 0;
 
-    // Decorative copy fills the viewport and is deliberately subdued. The sharp
-    // reference sits above it with the *pigeon silhouette* centered, removing the
-    // old small-card-on-blurred-duplicate look.
     const backgroundScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
-    this.background.setPosition(centerX, centerY).setScale(backgroundScale);
+    const backgroundPosition = getMemePigeonFocalPosition(
+      width,
+      height,
+      this.background.width,
+      this.background.height,
+      backgroundScale,
+    );
+    this.background.setPosition(backgroundPosition.x, backgroundPosition.y).setScale(backgroundScale);
 
     const placement = getMemePigeonScenePlacement(width, height, this.hero.width, this.hero.height, stageId);
     this.heroBaseScale = placement.scale;
