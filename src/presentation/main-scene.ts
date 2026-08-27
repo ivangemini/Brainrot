@@ -23,16 +23,19 @@ interface PigeonLayers {
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
+  private readonly onReady?: () => void;
   private layers?: PigeonLayers;
   private background?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
   private lastGrowthStage = 0;
+  private readySignaled = false;
 
-  public constructor(store: GameStore) {
+  public constructor(store: GameStore, onReady?: () => void) {
     super({ key: 'MainScene' });
     this.store = store;
+    this.onReady = onReady;
   }
 
   public preload(): void {
@@ -104,6 +107,13 @@ export class MainScene extends Phaser.Scene {
 
     this.unsubscribe = this.store.subscribe((state) => this.renderState(state));
     this.events.once('shutdown', () => this.unsubscribe?.());
+    this.signalReady();
+  }
+
+  private signalReady(): void {
+    if (this.readySignaled) return;
+    this.readySignaled = true;
+    this.onReady?.();
   }
 
   private layout(): void {
@@ -225,7 +235,7 @@ export class MainScene extends Phaser.Scene {
     const label = this.add.text(this.scale.width / 2, this.scale.height * 0.26, stageName.toUpperCase(), {
       fontFamily: 'system-ui, sans-serif',
       fontSize: '36px',
-      fontStyle: '900',
+      fontStyle: 'bold',
       color: '#f5f1e8',
       stroke: '#17191e',
       strokeThickness: 8,
