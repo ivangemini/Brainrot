@@ -23,7 +23,7 @@ interface PigeonLayers {
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
-  private readonly onReady?: () => void;
+  private readonly onReady: (() => void) | undefined;
   private layers?: PigeonLayers;
   private background?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
