@@ -1,15 +1,18 @@
 import Phaser from 'phaser';
+import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
+import { getCenteredHeroBox, getHeroSafeRect, rectContainsBounds } from './hero-layout';
 
-const HERO_TEXTURE = 'generated-main-hero';
-const HERO_PATH = '/assets/generated/main_scene_hero.webp';
+const HERO_TEXTURE = 'meme-pigeon-hero';
+const BACKGROUND_TEXTURE = 'meme-pigeon-background';
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
   private readonly onReady: (() => void) | undefined;
   private hero?: Phaser.GameObjects.Image;
+  private background?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
@@ -25,11 +28,18 @@ export class MainScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    this.load.image(HERO_TEXTURE, HERO_PATH);
+    this.load.image(HERO_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
+    this.load.image(BACKGROUND_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
     this.load.image('tap-burst', '/assets/ui/tap_burst.png');
   }
 
   public create(): void {
+    this.cameras.main.setBackgroundColor('#071b23');
+    this.background = this.add.image(0, 0, BACKGROUND_TEXTURE)
+      .setOrigin(0.5)
+      .setDepth(-20)
+      .setTint(0x56818b)
+      .setAlpha(0.64);
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
 
@@ -57,23 +67,40 @@ export class MainScene extends Phaser.Scene {
   }
 
   private layout(): void {
-    if (!this.hero) return;
+    if (!this.hero || !this.background) return;
     const width = this.scale.width;
     const height = this.scale.height;
-    const portrait = height > width;
-    const sceneWidth = portrait ? width : width * 0.77;
-    const sceneHeight = portrait ? height * 0.68 : height;
+    const centerX = width / 2;
+    const centerY = height / 2;
     const stageId = this.lastState
       ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
       : 0;
-    const growthZoom = 1 + Math.min(stageId, 6) * 0.018;
-    const coverScale = Math.max(sceneWidth / this.hero.width, sceneHeight / this.hero.height);
 
-    this.heroBaseScale = coverScale * growthZoom;
-    this.hero
-      .setPosition(sceneWidth / 2, sceneHeight / 2)
-      .setScale(this.heroBaseScale)
-      .setAngle(0);
+    // Decorative world can sit behind glass UI; the readable hero silhouette cannot.
+    const backgroundScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
+    this.background.setPosition(centerX, centerY).setScale(backgroundScale);
+
+    // Hero-first composition: actual screen center, never shifted around by panels.
+    const centeredBox = getCenteredHeroBox(width, height);
+    const fitScale = Math.min(
+      (centeredBox.width * 0.9) / this.hero.width,
+      (centeredBox.height * 0.9) / this.hero.height,
+    );
+    const growthScale = Math.min(1, 0.76 + Math.min(stageId, 7) * 0.035);
+    this.heroBaseScale = fitScale * growthScale;
+    this.hero.setPosition(centerX, centerY).setScale(this.heroBaseScale).setAngle(0);
+
+    const heroBounds = {
+      x: centerX - this.hero.displayWidth / 2,
+      y: centerY - this.hero.displayHeight / 2,
+      width: this.hero.displayWidth,
+      height: this.hero.displayHeight,
+    };
+    const safeRect = getHeroSafeRect(width, height);
+    this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, heroBounds, 2));
+    this.game.canvas.dataset.heroCentered = String(
+      Math.abs(this.hero.x - centerX) <= 1 && Math.abs(this.hero.y - centerY) <= 1,
+    );
   }
 
   private renderState(state: Readonly<GameState>): void {
@@ -95,10 +122,12 @@ export class MainScene extends Phaser.Scene {
 
   private isPointerOnPigeon(x: number, y: number): boolean {
     if (!this.hero) return false;
-    const pigeonCenterX = this.hero.x + this.hero.displayWidth * 0.035;
-    const pigeonCenterY = this.hero.y + this.hero.displayHeight * 0.045;
-    const radiusX = this.hero.displayWidth * 0.31;
-    const radiusY = this.hero.displayHeight * 0.42;
+    // Reference crop keeps the meme pigeon centered; use an ellipse around its body,
+    // not the full raster rectangle/background.
+    const pigeonCenterX = this.hero.x;
+    const pigeonCenterY = this.hero.y + this.hero.displayHeight * 0.08;
+    const radiusX = this.hero.displayWidth * 0.29;
+    const radiusY = this.hero.displayHeight * 0.36;
     const dx = (x - pigeonCenterX) / radiusX;
     const dy = (y - pigeonCenterY) / radiusY;
     return dx * dx + dy * dy <= 1;
@@ -121,6 +150,17 @@ export class MainScene extends Phaser.Scene {
       ease: 'Quad.Out',
     });
 
+    this.tweens.killTweensOf(this.hero);
+    this.tweens.add({
+      targets: this.hero,
+      scaleX: this.heroBaseScale * 1.025,
+      scaleY: this.heroBaseScale * 0.975,
+      duration: 64,
+      yoyo: true,
+      ease: 'Quad.Out',
+      onComplete: () => this.hero?.setScale(this.heroBaseScale),
+    });
+
     const text = this.add.text(
       x,
       y - 28,
@@ -130,7 +170,7 @@ export class MainScene extends Phaser.Scene {
         fontSize: result.critical ? '30px' : '22px',
         fontStyle: 'bold',
         color: result.critical ? '#f36a62' : '#f2c84b',
-        stroke: '#17191e',
+        stroke: '#071b23',
         strokeThickness: 5,
       },
     ).setOrigin(0.5).setDepth(120);
@@ -149,28 +189,29 @@ export class MainScene extends Phaser.Scene {
     if (!this.hero) return;
     const width = this.scale.width;
     const height = this.scale.height;
-    const portrait = height > width;
-    const sceneWidth = portrait ? width : width * 0.77;
-    const sceneHeight = portrait ? height * 0.68 : height;
 
     this.cameras.main.shake(240, 0.004);
+    this.cameras.main.flash(180, 92, 196, 232, false);
     this.tweens.killTweensOf(this.hero);
     this.tweens.add({
       targets: this.hero,
-      scaleX: this.heroBaseScale * 1.035,
-      scaleY: this.heroBaseScale * 1.035,
+      scaleX: this.heroBaseScale * 1.04,
+      scaleY: this.heroBaseScale * 1.04,
       duration: 180,
       yoyo: true,
       ease: 'Quad.Out',
-      onComplete: () => this.hero?.setScale(this.heroBaseScale),
+      onComplete: () => {
+        this.hero?.setScale(this.heroBaseScale);
+        this.layout();
+      },
     });
 
-    const label = this.add.text(sceneWidth / 2, sceneHeight * 0.25, stageName.toUpperCase(), {
+    const label = this.add.text(width / 2, height * 0.24, stageName.toUpperCase(), {
       fontFamily: 'system-ui, sans-serif',
-      fontSize: portrait ? '28px' : '36px',
+      fontSize: height > width ? '28px' : '36px',
       fontStyle: 'bold',
       color: '#f5f1e8',
-      stroke: '#17191e',
+      stroke: '#071b23',
       strokeThickness: 8,
       align: 'center',
     }).setOrigin(0.5).setDepth(150).setAlpha(0);
