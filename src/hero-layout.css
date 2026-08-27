@@ -1,0 +1,39 @@
+/* Hero-first layout overrides.
+   The meme pigeon owns the visual center. UI must route around it, never over it. */
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .upgrade-panel {
+    max-height: min(26vh, 220px);
+  }
+}
+
+@media (max-width: 560px) {
+  .top-hud {
+    gap: 6px;
+  }
+
+  .upgrade-panel {
+    max-height: min(24vh, 190px);
+  }
+
+  .upgrade-panel__header {
+    padding-top: 8px;
+    padding-bottom: 6px;
+  }
+
+  .upgrade-list {
+    gap: 6px;
+  }
+
+  .upgrade-card {
+    min-height: 88px;
+  }
+}
+
+/* Main UI is deliberately transparent over the world, but interactive panels
+   must remain in their reserved zones. Never add center-screen cards here. */
+.game-shell__center-overlay,
+.hero-overlay,
+.hero-center-panel {
+  pointer-events: none;
+}
