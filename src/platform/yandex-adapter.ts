@@ -49,7 +49,7 @@ const DISABLED_CAPABILITIES: PlatformCapabilities = {
 
 export class YandexAdapter implements PlatformAdapter {
   public readonly kind = 'yandex' as const;
-  private sdk?: YandexSdk;
+  private sdk: YandexSdk | undefined;
 
   public async initialize(): Promise<void> {
     if (this.sdk) return;
@@ -68,14 +68,22 @@ export class YandexAdapter implements PlatformAdapter {
   }
 
   public async signalReady(): Promise<void> {
-    this.sdk?.features?.LoadingAPI?.ready();
+    try {
+      this.sdk?.features?.LoadingAPI?.ready();
+    } catch (error) {
+      console.warn('Yandex LoadingAPI.ready() failed.', error);
+    }
   }
 
   public async setGameplayActive(active: boolean): Promise<void> {
     const gameplay = this.sdk?.features?.GameplayAPI;
     if (!gameplay) return;
-    if (active) gameplay.start();
-    else gameplay.stop();
+    try {
+      if (active) gameplay.start();
+      else gameplay.stop();
+    } catch (error) {
+      console.warn('Yandex GameplayAPI signal failed.', error);
+    }
   }
 
   public async showRewarded(_placement: string): Promise<RewardedAdResult> {
