@@ -3,6 +3,7 @@ import { createNewGameState, type GameState } from '../domain/game-state';
 
 const SAVE_KEY = 'pigeon-maxxing:save:v1';
 const OFFLINE_CAP_SECONDS = 8 * 60 * 60;
+const MAX_APPLIED_REWARD_IDS = 128;
 
 export interface LoadResult {
   readonly state: GameState;
@@ -25,6 +26,12 @@ function sanitizeState(candidate: unknown, now: number): GameState {
     return Number.isFinite(value) ? Math.max(0, Math.floor(value as number)) : 0;
   };
 
+  const rewardIds = Array.isArray(raw.appliedRewardIds)
+    ? Array.from(new Set(raw.appliedRewardIds.filter((value): value is string => (
+      typeof value === 'string' && value.length > 0 && value.length <= 120
+    )))).slice(-MAX_APPLIED_REWARD_IDS)
+    : [];
+
   return {
     ...fresh,
     balanceVersion: typeof raw.balanceVersion === 'string' ? raw.balanceVersion : fresh.balanceVersion,
@@ -44,6 +51,7 @@ function sanitizeState(candidate: unknown, now: number): GameState {
     discoveredGrowthStages: Array.isArray(raw.discoveredGrowthStages)
       ? raw.discoveredGrowthStages.filter((v): v is number => Number.isInteger(v) && v >= 0)
       : [0],
+    appliedRewardIds: rewardIds,
   };
 }
 
@@ -75,6 +83,7 @@ export function saveGame(
     lastSavedAt: now,
     saveRevision: state.saveRevision,
     discoveredGrowthStages: [...state.discoveredGrowthStages],
+    appliedRewardIds: [...state.appliedRewardIds].slice(-MAX_APPLIED_REWARD_IDS),
   };
   storage.setItem(SAVE_KEY, JSON.stringify(payload));
 }
