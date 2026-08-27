@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
+import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../domain/bread-rush';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
+import { getCenteredHeroBox, getHeroSafeRect, rectContainsBounds } from './hero-layout';
 
-const HERO_TEXTURE = 'generated-main-hero';
-const HERO_PATH = '/assets/generated/main_scene_hero.webp';
+const HERO_TEXTURE = 'meme-pigeon-hero';
+const EVENT_BACKGROUND_TEXTURE = 'meme-pigeon-event-background';
 const BREAD_TEXTURE = 'generated-bread-target';
 const BREAD_PATH = '/assets/generated/bread_target.png';
 
@@ -18,6 +20,7 @@ export class BreadRushScene extends Phaser.Scene {
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
   private hero: Phaser.GameObjects.Image | undefined;
+  private background: Phaser.GameObjects.Image | undefined;
   private heroBaseScale = 1;
   private completedSignaled = false;
   private readonly onResize = (): void => this.layout();
@@ -34,7 +37,8 @@ export class BreadRushScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    if (!this.textures.exists(HERO_TEXTURE)) this.load.image(HERO_TEXTURE, HERO_PATH);
+    if (!this.textures.exists(HERO_TEXTURE)) this.load.image(HERO_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
+    if (!this.textures.exists(EVENT_BACKGROUND_TEXTURE)) this.load.image(EVENT_BACKGROUND_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
     this.load.image(BREAD_TEXTURE, BREAD_PATH);
   }
 
@@ -43,10 +47,13 @@ export class BreadRushScene extends Phaser.Scene {
     this.targetSprites.clear();
     this.session = new BreadRushSession();
 
+    this.background = this.add.image(0, 0, EVENT_BACKGROUND_TEXTURE)
+      .setOrigin(0.5)
+      .setTint(0x4f7f86)
+      .setAlpha(0.68)
+      .setDepth(-20);
     this.hero = this.add.image(0, 0, HERO_TEXTURE)
       .setOrigin(0.5)
-      .setTint(0xd7ddd3)
-      .setAlpha(0.94)
       .setDepth(0);
 
     this.scale.on('resize', this.onResize);
@@ -57,6 +64,7 @@ export class BreadRushScene extends Phaser.Scene {
       this.session = undefined;
       this.callbacks = undefined;
       this.hero = undefined;
+      this.background = undefined;
     });
     this.layout();
     this.callbacks?.onSnapshot(this.session.getSnapshot());
@@ -78,16 +86,38 @@ export class BreadRushScene extends Phaser.Scene {
   private layout(): void {
     const width = this.scale.width;
     const height = this.scale.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    if (this.background) {
+      const coverScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
+      this.background.setPosition(centerX, centerY).setScale(coverScale);
+    }
 
     if (this.hero) {
       const state = this.store.getSnapshot();
       const stageId = getGrowthStage(getTotalUpgradeLevel(state.branchLevels)).id;
-      const coverScale = Math.max(width / this.hero.width, height / this.hero.height);
-      this.heroBaseScale = coverScale * (1 + Math.min(stageId, 6) * 0.012);
+      const centeredBox = getCenteredHeroBox(width, height);
+      const fitScale = Math.min(
+        (centeredBox.width * 0.86) / this.hero.width,
+        (centeredBox.height * 0.86) / this.hero.height,
+      );
+      const growthScale = Math.min(1, 0.76 + Math.min(stageId, 7) * 0.035);
+      this.heroBaseScale = fitScale * growthScale;
       this.hero
-        .setPosition(width / 2, height / 2)
+        .setPosition(centerX, centerY)
         .setScale(this.heroBaseScale)
         .setAngle(0);
+
+      const safeRect = getHeroSafeRect(width, height);
+      const bounds = {
+        x: centerX - this.hero.displayWidth / 2,
+        y: centerY - this.hero.displayHeight / 2,
+        width: this.hero.displayWidth,
+        height: this.hero.displayHeight,
+      };
+      this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, bounds, 2));
+      this.game.canvas.dataset.heroCentered = 'true';
     }
 
     const snapshot = this.session?.getSnapshot();
@@ -152,7 +182,7 @@ export class BreadRushScene extends Phaser.Scene {
       fontSize: result.kind === 'golden' ? '34px' : '24px',
       fontStyle: 'bold',
       color: result.kind === 'golden' ? '#f2c84b' : '#f5f1e8',
-      stroke: '#17191e',
+      stroke: '#071b23',
       strokeThickness: 6,
     }).setOrigin(0.5).setDepth(80);
     this.tweens.add({
@@ -186,8 +216,8 @@ export class BreadRushScene extends Phaser.Scene {
     const portrait = height > width;
     const left = width * 0.06;
     const right = width * 0.94;
-    const top = height * (portrait ? 0.16 : 0.14);
-    const bottom = height * (portrait ? 0.78 : 0.86);
+    const top = height * (portrait ? 0.14 : 0.13);
+    const bottom = height * (portrait ? 0.74 : 0.86);
     return {
       x: left + xNorm * (right - left),
       y: top + yNorm * (bottom - top),
