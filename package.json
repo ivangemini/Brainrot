@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "art:generate": "node tools/art/generate-raster-assets.mjs && node tools/art/generate-event-assets.mjs",
+    "art:generate": "node tools/art/generate-raster-assets.mjs && node tools/art/refine-raster-assets.mjs && node tools/art/generate-event-assets.mjs",
     "predev": "npm run art:generate",
     "dev": "vite",
     "prebuild": "npm run art:generate",
