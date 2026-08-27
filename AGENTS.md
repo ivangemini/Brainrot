@@ -50,6 +50,22 @@ Once created, project-specific source-of-truth documents override generic framew
 5. relevant `agents/` role profile;
 6. generic framework/reference documentation.
 
+## Mandatory meme-pigeon visual contract
+
+The current game identity is locked to the user-approved meme pigeon reference. These rules are mandatory for all player-facing art and layout work unless the user explicitly changes them later:
+
+- The hero is the **bright blue uncanny meme pigeon with human-like orange lips**, not a generic city pigeon.
+- The same recognizable identity must survive Growth, cosmetics, mutations and late-game forms: blue body, meme face/lips, uncanny expression and the same core silhouette language.
+- Production character/environment art remains **generated raster art only**. Do not reintroduce SVG/vector/shape-built character art as a production substitute.
+- The hero is the primary focal point and must be **centered on the actual viewport**, not centered only inside a leftover content column.
+- UI must route around the hero. The readable hero silhouette must not overlap the top HUD, upgrade panel/tray, event cards, result cards or other interactive UI.
+- UI must not cover the hero's face, torso or readable silhouette, and hero scaling must not intrude into reserved UI zones.
+- Desktop and mobile layouts require an explicit hero-safe rectangle. Runtime code must size the hero inside that rectangle while keeping its anchor at viewport center.
+- Growth is allowed to increase visible hero size only up to the safe-zone boundary. If Growth would collide with UI, the scene/camera/framing must adapt rather than allowing overlap.
+- Browser visual QA must verify both `heroCentered` and `heroSafe` runtime invariants on desktop and mobile.
+
+Canonical detail lives in `design/art/meme-pigeon-identity.md` and `design/ui/hero-first-layout.md`.
+
 ## Directory semantics
 
 - `agents/` — role profiles applied by the single Codex agent.
