@@ -7,17 +7,17 @@ export interface HeroSafeRect {
 
 /**
  * Runtime mirror of the DOM reserved UI zones.
- * The hero must stay fully inside this rectangle so its readable silhouette never
- * collides with the top HUD, desktop upgrade panel, or mobile bottom upgrade tray.
+ * The approved meme pigeon stays centered on the viewport, while its readable
+ * silhouette must remain inside this safe rectangle and never collide with UI.
  */
 export function getHeroSafeRect(viewportWidth: number, viewportHeight: number): HeroSafeRect {
   const portrait = viewportHeight > viewportWidth;
 
   if (portrait) {
-    const topHudReserve = viewportWidth <= 560 ? 78 : 92;
-    const bottomTrayHeight = Math.min(viewportHeight * (viewportWidth <= 560 ? 0.36 : 0.38), viewportWidth <= 560 ? 300 : 330);
+    const topHudReserve = viewportWidth <= 560 ? 76 : 90;
+    const bottomTrayHeight = Math.min(viewportHeight * (viewportWidth <= 560 ? 0.24 : 0.26), viewportWidth <= 560 ? 190 : 220);
     const edge = 12;
-    const bottom = viewportHeight - bottomTrayHeight - 18;
+    const bottom = viewportHeight - bottomTrayHeight - 14;
     return {
       x: edge,
       y: topHudReserve,
@@ -36,6 +36,21 @@ export function getHeroSafeRect(viewportWidth: number, viewportHeight: number): 
     y: top,
     width: Math.max(1, right - left),
     height: Math.max(1, bottom - top),
+  };
+}
+
+/** Returns the largest centered box that fits inside the safe rectangle. */
+export function getCenteredHeroBox(viewportWidth: number, viewportHeight: number): HeroSafeRect {
+  const safe = getHeroSafeRect(viewportWidth, viewportHeight);
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight / 2;
+  const halfWidth = Math.max(1, Math.min(centerX - safe.x, safe.x + safe.width - centerX));
+  const halfHeight = Math.max(1, Math.min(centerY - safe.y, safe.y + safe.height - centerY));
+  return {
+    x: centerX - halfWidth,
+    y: centerY - halfHeight,
+    width: halfWidth * 2,
+    height: halfHeight * 2,
   };
 }
 
