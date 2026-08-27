@@ -1,36 +1,22 @@
 import Phaser from 'phaser';
-import {
-  getGrowthStage,
-  getTotalUpgradeLevel,
-  type BranchLevels,
-} from '../domain/economy-formulas';
+import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 
-interface PigeonLayers {
-  readonly root: Phaser.GameObjects.Container;
-  readonly shadow: Phaser.GameObjects.Image;
-  readonly nest: Phaser.GameObjects.Image;
-  readonly wing: Phaser.GameObjects.Image;
-  readonly body: Phaser.GameObjects.Image;
-  readonly legs: Phaser.GameObjects.Image;
-  readonly head: Phaser.GameObjects.Image;
-  readonly eyes: Phaser.GameObjects.Image;
-  readonly beak: Phaser.GameObjects.Image;
-  readonly glasses: Phaser.GameObjects.Image;
-  readonly chain: Phaser.GameObjects.Image;
-}
+const HERO_TEXTURE = 'generated-main-hero';
+const HERO_PATH = '/assets/generated/main_scene_hero.webp';
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
   private readonly onReady: (() => void) | undefined;
-  private layers?: PigeonLayers;
-  private background?: Phaser.GameObjects.Image;
+  private hero?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
   private lastGrowthStage = 0;
+  private heroBaseScale = 1;
   private readySignaled = false;
+  private readonly onResize = (): void => this.layout();
 
   public constructor(store: GameStore, onReady?: () => void) {
     super({ key: 'MainScene' });
@@ -39,62 +25,13 @@ export class MainScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    this.load.image('park-bg', '/assets/world/park_bg.png');
-    this.load.image('pigeon-shadow', '/assets/pigeon/shadow.png');
-    this.load.image('pigeon-nest', '/assets/pigeon/nest.png');
-    this.load.image('pigeon-wing-1', '/assets/pigeon/wing_t1.png');
-    this.load.image('pigeon-wing-2', '/assets/pigeon/wing_t2.png');
-    this.load.image('pigeon-wing-3', '/assets/pigeon/wing_t3.png');
-    this.load.image('pigeon-body-1', '/assets/pigeon/body_t1.png');
-    this.load.image('pigeon-body-2', '/assets/pigeon/body_t2.png');
-    this.load.image('pigeon-body-3', '/assets/pigeon/body_t3.png');
-    this.load.image('pigeon-legs', '/assets/pigeon/legs.png');
-    this.load.image('pigeon-head', '/assets/pigeon/head.png');
-    this.load.image('pigeon-eyes', '/assets/pigeon/eyes.png');
-    this.load.image('pigeon-beak-1', '/assets/pigeon/beak_t1.png');
-    this.load.image('pigeon-beak-2', '/assets/pigeon/beak_t2.png');
-    this.load.image('pigeon-beak-3', '/assets/pigeon/beak_t3.png');
-    this.load.image('pigeon-glasses', '/assets/pigeon/glasses.png');
-    this.load.image('pigeon-chain', '/assets/pigeon/chain.png');
+    this.load.image(HERO_TEXTURE, HERO_PATH);
     this.load.image('tap-burst', '/assets/ui/tap_burst.png');
   }
 
   public create(): void {
-    this.background = this.add.image(0, 0, 'park-bg').setOrigin(0.5);
-    const root = this.add.container(0, 0);
-    const makeLayer = (key: string): Phaser.GameObjects.Image => (
-      this.add.image(0, 0, key).setOrigin(0.5)
-    );
-
-    const layers: PigeonLayers = {
-      root,
-      shadow: makeLayer('pigeon-shadow'),
-      nest: makeLayer('pigeon-nest'),
-      wing: makeLayer('pigeon-wing-1'),
-      body: makeLayer('pigeon-body-1'),
-      legs: makeLayer('pigeon-legs'),
-      head: makeLayer('pigeon-head'),
-      eyes: makeLayer('pigeon-eyes'),
-      beak: makeLayer('pigeon-beak-1'),
-      glasses: makeLayer('pigeon-glasses'),
-      chain: makeLayer('pigeon-chain'),
-    };
-
-    root.add([
-      layers.shadow,
-      layers.nest,
-      layers.wing,
-      layers.body,
-      layers.legs,
-      layers.head,
-      layers.eyes,
-      layers.beak,
-      layers.glasses,
-      layers.chain,
-    ]);
-
-    this.layers = layers;
-    this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5);
+    this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
+    this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.isPointerOnPigeon(pointer.x, pointer.y)) return;
@@ -102,11 +39,14 @@ export class MainScene extends Phaser.Scene {
       this.playTapFeedback(pointer.x, pointer.y, result);
     });
 
-    this.scale.on('resize', () => this.layout());
+    this.scale.on('resize', this.onResize);
     this.layout();
 
     this.unsubscribe = this.store.subscribe((state) => this.renderState(state));
-    this.events.once('shutdown', () => this.unsubscribe?.());
+    this.events.once('shutdown', () => {
+      this.unsubscribe?.();
+      this.scale.off('resize', this.onResize);
+    });
     this.signalReady();
   }
 
@@ -117,21 +57,23 @@ export class MainScene extends Phaser.Scene {
   }
 
   private layout(): void {
-    if (!this.background || !this.layers) return;
+    if (!this.hero) return;
     const width = this.scale.width;
     const height = this.scale.height;
-
-    this.background.setPosition(width / 2, height / 2);
-    const bgScale = Math.max(width / 1600, height / 1000);
-    this.background.setScale(bgScale);
-
     const portrait = height > width;
-    const base = Math.min(width, height) * (portrait ? 0.78 : 0.72);
-    this.layers.root.setPosition(width * (portrait ? 0.5 : 0.43), height * (portrait ? 0.51 : 0.56));
-    this.layers.root.setScale(base / 768);
+    const sceneWidth = portrait ? width : width * 0.77;
+    const sceneHeight = portrait ? height * 0.68 : height;
+    const stageId = this.lastState
+      ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
+      : 0;
+    const growthZoom = 1 + Math.min(stageId, 6) * 0.018;
+    const coverScale = Math.max(sceneWidth / this.hero.width, sceneHeight / this.hero.height);
 
-    if (this.tapBurst) this.tapBurst.setDepth(100);
-    if (this.lastState) this.applyVisualState(this.lastState.branchLevels);
+    this.heroBaseScale = coverScale * growthZoom;
+    this.hero
+      .setPosition(sceneWidth / 2, sceneHeight / 2)
+      .setScale(this.heroBaseScale)
+      .setAngle(0);
   }
 
   private renderState(state: Readonly<GameState>): void {
@@ -142,59 +84,34 @@ export class MainScene extends Phaser.Scene {
     this.lastState = state;
     this.applyVisualState(state.branchLevels);
 
-    if (stage.id > previousStage && previousStage !== 0) {
-      this.playGrowthCeremony(stage.name);
-    } else if (stage.id > previousStage && total >= 10) {
+    if (stage.id > previousStage && (previousStage !== 0 || total >= 10)) {
       this.playGrowthCeremony(stage.name);
     }
   }
 
-  private applyVisualState(levels: BranchLevels): void {
-    if (!this.layers) return;
-    const total = getTotalUpgradeLevel(levels);
-    const stage = getGrowthStage(total);
-
-    this.layers.body.setTexture(`pigeon-body-${stage.bodyTier}`);
-    const wingTier = levels.wings >= 25 ? 3 : levels.wings >= 5 ? 2 : 1;
-    this.layers.wing.setTexture(`pigeon-wing-${wingTier}`);
-    const beakTier = levels.beak >= 25 ? 3 : levels.beak >= 5 ? 2 : 1;
-    this.layers.beak.setTexture(`pigeon-beak-${beakTier}`);
-
-    this.layers.nest.setVisible(levels.nest > 0);
-    this.layers.glasses.setVisible(levels.swag >= 1);
-    this.layers.chain.setVisible(levels.swag >= 5);
-
-    const width = this.scale.width;
-    const height = this.scale.height;
-    const portrait = height > width;
-    const base = Math.min(width, height) * (portrait ? 0.78 : 0.72);
-    this.layers.root.setScale((base / 768) * stage.scale);
+  private applyVisualState(_levels: BranchLevels): void {
+    this.layout();
   }
 
   private isPointerOnPigeon(x: number, y: number): boolean {
-    if (!this.layers) return false;
-    const root = this.layers.root;
-    const radius = Math.min(this.scale.width, this.scale.height) * 0.28 * root.scaleX;
-    const dx = x - root.x;
-    const dy = y - root.y;
-    return dx * dx + dy * dy <= Math.max(120, radius) ** 2;
+    if (!this.hero) return false;
+    const pigeonCenterX = this.hero.x + this.hero.displayWidth * 0.035;
+    const pigeonCenterY = this.hero.y + this.hero.displayHeight * 0.045;
+    const radiusX = this.hero.displayWidth * 0.31;
+    const radiusY = this.hero.displayHeight * 0.42;
+    const dx = (x - pigeonCenterX) / radiusX;
+    const dy = (y - pigeonCenterY) / radiusY;
+    return dx * dx + dy * dy <= 1;
   }
 
   private playTapFeedback(x: number, y: number, result: TapResult): void {
-    if (!this.layers || !this.tapBurst) return;
+    if (!this.hero || !this.tapBurst) return;
 
-    this.tweens.killTweensOf(this.layers.root);
-    const originalScale = this.layers.root.scaleX;
-    this.tweens.add({
-      targets: this.layers.root,
-      scaleX: originalScale * 1.035,
-      scaleY: originalScale * 0.965,
-      duration: 70,
-      yoyo: true,
-      ease: 'Quad.Out',
-    });
-
-    this.tapBurst.setPosition(x, y).setAlpha(result.critical ? 1 : 0.72).setScale(result.critical ? 0.8 : 0.5);
+    this.cameras.main.shake(result.critical ? 90 : 55, result.critical ? 0.0014 : 0.00065);
+    this.tapBurst
+      .setPosition(x, y)
+      .setAlpha(result.critical ? 1 : 0.72)
+      .setScale(result.critical ? 0.8 : 0.5);
     this.tweens.killTweensOf(this.tapBurst);
     this.tweens.add({
       targets: this.tapBurst,
@@ -229,12 +146,28 @@ export class MainScene extends Phaser.Scene {
   }
 
   private playGrowthCeremony(stageName: string): void {
-    if (!this.layers) return;
-    const root = this.layers.root;
+    if (!this.hero) return;
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const portrait = height > width;
+    const sceneWidth = portrait ? width : width * 0.77;
+    const sceneHeight = portrait ? height * 0.68 : height;
+
     this.cameras.main.shake(240, 0.004);
-    const label = this.add.text(this.scale.width / 2, this.scale.height * 0.26, stageName.toUpperCase(), {
+    this.tweens.killTweensOf(this.hero);
+    this.tweens.add({
+      targets: this.hero,
+      scaleX: this.heroBaseScale * 1.035,
+      scaleY: this.heroBaseScale * 1.035,
+      duration: 180,
+      yoyo: true,
+      ease: 'Quad.Out',
+      onComplete: () => this.hero?.setScale(this.heroBaseScale),
+    });
+
+    const label = this.add.text(sceneWidth / 2, sceneHeight * 0.25, stageName.toUpperCase(), {
       fontFamily: 'system-ui, sans-serif',
-      fontSize: '36px',
+      fontSize: portrait ? '28px' : '36px',
       fontStyle: 'bold',
       color: '#f5f1e8',
       stroke: '#17191e',
@@ -242,14 +175,6 @@ export class MainScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setDepth(150).setAlpha(0);
 
-    this.tweens.add({
-      targets: root,
-      angle: { from: -2, to: 2 },
-      duration: 80,
-      yoyo: true,
-      repeat: 3,
-      onComplete: () => root.setAngle(0),
-    });
     this.tweens.add({
       targets: label,
       alpha: { from: 0, to: 1 },
