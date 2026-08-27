@@ -1,6 +1,7 @@
 import './styles.css';
 import './reward.css';
 import './bread-rush.css';
+import './hero-layout.css';
 import { GameStore } from './domain/game-store';
 import { BreadRushService, type BreadRushResult, type BreadRushRunContext } from './events/bread-rush-service';
 import { MonetizationService } from './monetization/monetization-service';
