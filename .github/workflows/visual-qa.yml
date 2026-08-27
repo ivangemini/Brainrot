@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'codex/bread-rush-v1'
+      - 'codex/generated-art-runtime-v2'
+      - main
   workflow_dispatch:
 
 permissions:
