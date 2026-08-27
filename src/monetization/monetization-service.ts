@@ -38,10 +38,13 @@ export class MonetizationService {
     }
 
     await this.lifecycle.pause('rewarded-ad');
-    let adStatus: RewardedAdStatus;
+    let adStatus: RewardedAdStatus = 'error';
     try {
       const result = await this.platform.showRewarded('offline-income-double');
       adStatus = result.status;
+    } catch (error) {
+      console.warn('Rewarded ad call failed.', error);
+      adStatus = 'error';
     } finally {
       await this.lifecycle.resume('rewarded-ad');
     }
