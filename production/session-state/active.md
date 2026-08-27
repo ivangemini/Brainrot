@@ -1,45 +1,63 @@
-# Active Session — First Playable
+# Active Session — Bread Rush Vertical Slice
 
 > Updated: 2026-08-27
-> Working branch: `codex/playable-v1c`
-> Task: Build the first playable Pigeon Maxxing vertical slice
+> Working branch: `codex/bread-rush-v1`
+> Task: Finish and verify the first Pigeon Event and show real runtime presentation.
 
 ## Completed
 
-- Vite + TypeScript strict + Phaser 4.2.1 browser scaffold.
-- Authoritative Phaser-independent `GameStore`.
-- Core progression economy: Feathers, Beak/Body/Nest/Wings/Swag/Brain, costs, branch unlocks, milestones, combo/crit/passive/automation formulas and Growth stages.
-- Opening invariant: first Beak costs 15 Feathers and Beak Lv1 raises base tap 1.0 -> 1.2.
-- Responsive DOM HUD and upgrade panel for mobile/desktop.
-- Phaser main world scene with layered raster pigeon, tap feedback, tier swaps and Growth ceremony.
-- Versioned local save with validation and capped offline earnings.
-- Deterministic build-time raster texture generator (`tools/art/generate-raster-assets.mjs`) producing 25 PNG textures.
-- Raster-only contract locked in Art Bible, technical preferences, production standard and ADR-0006; SVG player-facing production art is forbidden.
-- Unit coverage for economy formulas, store transactions and save corruption/round-trip.
-- CI pipeline generates art, rejects SVG in `public/assets`, runs Vitest and performs TypeScript + Vite production build.
-- Obsolete base64 bootstrap workflow/payload and duplicate Python generator removed.
-- ADR-0001 through ADR-0006 authored for the implemented architecture.
+- First playable clicker foundation remains intact: Feathers, six upgrade branches, Total Upgrade Level, Growth stages, combo/crit/passive/automation, local save and offline income.
+- Portal boundary is live: generic web fallback, Yandex adapter, LoadingAPI ready signal after Phaser scene readiness, gameplay start/stop lifecycle, rewarded ads and idempotent reward transactions.
+- Raster-only production rule remains enforced; no SVG production art is permitted.
+- Added Bread Rush as the first playable Pigeon Event:
+  - unlock at Total Lv 90;
+  - 3 second countdown;
+  - 30 seconds of active gameplay;
+  - normal and golden bread targets;
+  - touch-friendly moving targets with bounded lifetimes;
+  - main clicker simulation pauses while the event is active;
+  - event time advances only from the authoritative active-gameplay clock;
+  - background/ad pause therefore does not consume the event timer;
+  - economy-scaled base reward is secured before any ad offer;
+  - optional rewarded 2x uses a separate idempotent transaction;
+  - personal best, run count and six-minute active-play cooldown persist in the save.
+- Added deterministic Bread Rush raster textures and a refinement pass for the pigeon/park raster pack.
+- Added desktop/mobile/browser runtime visual QA using Playwright + Chromium.
+- Browser QA now asserts that Bread Rush leaves countdown and its active timer actually decreases, preventing the runtime clock regression found during this pass.
 
 ## Verification Evidence
 
-GitHub Actions CI run `33084072171` on commit `8a5c0cee22558a59d1ca70883946e5a7c59dfeaf` passed:
-- raster generator: PASS;
-- raster-only check: PASS;
-- Vitest: 3 files / 10 tests PASS;
-- TypeScript compile: PASS;
-- Vite 8.2.2 production build: PASS;
-- JS bundle at that checkpoint: ~1.39 MB minified / ~365 KB gzip (Phaser-dominant; code-splitting warning recorded for later optimization).
+Code SHA `fa5e18ac7512e548759597ca397435bafc45a5b7`:
 
-Later documentation/ADR commits require the ordinary CI run for their final HEAD before merge.
+- GitHub Actions CI run `33089332158`: PASS.
+  - raster generation: PASS;
+  - raster-only / no-SVG gate: PASS;
+  - Vitest suite: PASS;
+  - strict TypeScript production compile: PASS;
+  - Vite production build: PASS.
+- Browser Visual QA run `33089332177`: PASS.
+  - production preview booted in Chromium;
+  - desktop main screen captured at 1440x900;
+  - mobile main screen captured at 390x844;
+  - Total Lv 90 event-ready state captured;
+  - active Bread Rush captured after countdown;
+  - active timer assertion passed;
+  - console/page errors: none.
+
+## Current Visual Status
+
+- Runtime is now visibly game-like and responsive rather than an empty systems scaffold.
+- Pigeon and environment are generated raster PNG assets with texture/shading/detail refinement; the runtime does not rely on SVG character/environment art.
+- Current raster pack is still an early production pass. Future art passes should replace/refine individual raster layers without changing the gameplay contracts or reverting to vector placeholders.
 
 ## Next
 
-1. Confirm CI green on final branch HEAD.
-2. Fast-forward `main` without force.
-3. Verify `main` status.
-4. Continue next coherent slice: generic PlatformAdapter + rewarded transaction ledger, then Yandex adapter integration and first Pigeon Event/Mutation after platform lifecycle is safe.
-5. Add real browser responsive/playtest evidence before calling the vertical slice release-ready.
+1. Continue progression/content depth after the verified Bread Rush slice.
+2. Implement the first Mutation choice and persist its modifiers/visual mapping.
+3. Add the second MVP Pigeon Event (Pigeon Drop) after Mutation is stable.
+4. Continue production raster art expansion for additional Growth/mutation states.
+5. Add audio/game-feel and broader portal QA before release readiness.
 
 ## Blockers
 
-None currently known. Browser visual QA has not yet been executed, so visual completion is not claimed.
+None for continued development. The project is a verified first playable vertical slice, not yet a release-complete game.
