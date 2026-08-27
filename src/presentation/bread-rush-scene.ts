@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { BREAD_RUSH } from '../content/event-content';
 import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../domain/bread-rush';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
@@ -10,8 +9,8 @@ export interface BreadRushSceneCallbacks {
 }
 
 export class BreadRushScene extends Phaser.Scene {
-  private session?: BreadRushSession;
-  private callbacks?: BreadRushSceneCallbacks;
+  private session: BreadRushSession | undefined;
+  private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
   private background?: Phaser.GameObjects.Image;
   private pigeonRoot?: Phaser.GameObjects.Container;
