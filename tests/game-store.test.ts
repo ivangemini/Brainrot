@@ -41,4 +41,26 @@ describe('GameStore', () => {
     expect(result.payout).toBeCloseTo(1, 8);
     expect(store.getSnapshot().feathers).toBeCloseTo(1, 8);
   });
+
+  it('applies a rewarded transaction exactly once', () => {
+    const store = new GameStore(createNewGameState(), () => 1);
+
+    const first = store.applyRewardOnce('offline:1', 40);
+    const duplicate = store.applyRewardOnce('offline:1', 40);
+
+    expect(first.applied).toBe(true);
+    expect(duplicate.applied).toBe(false);
+    expect(duplicate.reason).toBe('duplicate');
+    expect(store.getSnapshot().feathers).toBe(40);
+    expect(store.getSnapshot().appliedRewardIds).toEqual(['offline:1']);
+  });
+
+  it('rejects malformed rewarded transactions without mutating state', () => {
+    const store = new GameStore(createNewGameState(), () => 1);
+
+    expect(store.applyRewardOnce('   ', 10).reason).toBe('invalid');
+    expect(store.applyRewardOnce('valid', -1).reason).toBe('invalid');
+    expect(store.getSnapshot().feathers).toBe(0);
+    expect(store.getSnapshot().appliedRewardIds).toEqual([]);
+  });
 });
