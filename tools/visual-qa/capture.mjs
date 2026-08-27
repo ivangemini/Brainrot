@@ -8,12 +8,16 @@ mkdirSync(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const issues = [];
 
-async function openPage(viewport, label) {
-  const page = await browser.newPage({ viewport });
+function attachIssueListeners(page, label) {
   page.on('console', (message) => {
     if (message.type() === 'error') issues.push(`${label}: console.error: ${message.text()}`);
   });
   page.on('pageerror', (error) => issues.push(`${label}: pageerror: ${error.message}`));
+}
+
+async function openPage(viewport, label) {
+  const page = await browser.newPage({ viewport });
+  attachIssueListeners(page, label);
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.waitForSelector('#game-canvas canvas', { state: 'visible' });
   return page;
@@ -21,12 +25,14 @@ async function openPage(viewport, label) {
 
 const desktop = await openPage({ width: 1440, height: 900 }, 'desktop');
 await desktop.screenshot({ path: `${outputDir}/desktop-main.png`, fullPage: true });
+await desktop.close();
 
 const mobile = await openPage({ width: 390, height: 844 }, 'mobile');
 await mobile.screenshot({ path: `${outputDir}/mobile-main.png`, fullPage: true });
 await mobile.close();
 
-await desktop.evaluate(() => {
+const eventContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+await eventContext.addInitScript(() => {
   const now = Date.now();
   const state = {
     schemaVersion: 1,
@@ -43,13 +49,18 @@ await desktop.evaluate(() => {
   };
   localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(state));
 });
-await desktop.reload({ waitUntil: 'networkidle' });
-await desktop.waitForSelector('.bread-rush-offer:not([hidden])', { timeout: 8000 });
-await desktop.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullPage: true });
-await desktop.click('.bread-rush-offer');
-await desktop.waitForSelector('.bread-rush-hud:not([hidden])');
-await desktop.waitForTimeout(3600);
-await desktop.screenshot({ path: `${outputDir}/desktop-bread-rush.png`, fullPage: true });
+const eventPage = await eventContext.newPage();
+attachIssueListeners(eventPage, 'event');
+await eventPage.goto(baseURL, { waitUntil: 'networkidle' });
+await eventPage.waitForSelector('#game-canvas canvas', { state: 'visible' });
+await eventPage.waitForSelector('.bread-rush-offer:not([hidden])', { timeout: 8000 });
+await eventPage.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullPage: true });
+await eventPage.click('.bread-rush-offer');
+await eventPage.waitForSelector('.bread-rush-hud:not([hidden])');
+await eventPage.waitForTimeout(3600);
+await eventPage.screenshot({ path: `${outputDir}/desktop-bread-rush.png`, fullPage: true });
+await eventPage.close();
+await eventContext.close();
 
 const summary = {
   url: baseURL,
@@ -57,7 +68,6 @@ const summary = {
   screenshots: ['desktop-main.png', 'mobile-main.png', 'desktop-event-ready.png', 'desktop-bread-rush.png'],
 };
 writeFileSync(`${outputDir}/report.json`, JSON.stringify(summary, null, 2));
-await desktop.close();
 await browser.close();
 
 if (issues.length > 0) {
