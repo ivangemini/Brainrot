@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import type { GameStore } from '../domain/game-store';
 import { MainScene } from './main-scene';
 
-export function createPhaserGame(parent: string, store: GameStore): Phaser.Game {
-  const scene = new MainScene(store);
+export function createPhaserGame(parent: string, store: GameStore, onReady?: () => void): Phaser.Game {
+  const scene = new MainScene(store, onReady);
   return new Phaser.Game({
     type: Phaser.AUTO,
     parent,
