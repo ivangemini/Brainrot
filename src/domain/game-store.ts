@@ -1,3 +1,4 @@
+import { BREAD_RUSH } from '../content/event-content';
 import type { UpgradeBranchId } from '../content/economy-content';
 import {
   getComboCap,
@@ -88,6 +89,14 @@ export class GameStore {
       changed = true;
     }
 
+    if (this.state.events.breadRushCooldownSeconds > 0) {
+      const nextCooldown = Math.max(0, this.state.events.breadRushCooldownSeconds - deltaSeconds);
+      if (nextCooldown !== this.state.events.breadRushCooldownSeconds) {
+        this.state.events.breadRushCooldownSeconds = nextCooldown;
+        changed = true;
+      }
+    }
+
     if (this.state.lastTapAt > 0 && now - this.state.lastTapAt > 750 && this.state.comboCharge > 0) {
       const retention = 1 + this.state.branchLevels.wings * 0.012;
       const nextCharge = Math.max(0, this.state.comboCharge - deltaSeconds * (0.46 / retention));
@@ -154,6 +163,19 @@ export class GameStore {
   public addFeathers(amount: number): void {
     if (!Number.isFinite(amount) || amount <= 0) return;
     this.state.feathers += amount;
+    this.emit();
+  }
+
+  public isBreadRushAvailable(): boolean {
+    return getTotalUpgradeLevel(this.state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
+      && this.state.events.breadRushCooldownSeconds <= 0;
+  }
+
+  public recordBreadRushCompletion(score: number): void {
+    const safeScore = Math.max(0, Math.floor(Number.isFinite(score) ? score : 0));
+    this.state.events.breadRushRuns += 1;
+    this.state.events.breadRushBestScore = Math.max(this.state.events.breadRushBestScore, safeScore);
+    this.state.events.breadRushCooldownSeconds = BREAD_RUSH.cooldownActiveSeconds;
     this.emit();
   }
 
