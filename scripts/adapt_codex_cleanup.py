@@ -2,15 +2,16 @@ from pathlib import Path
 
 root = Path('.')
 
-# Remove a Claude-runtime-only template. Codex project policy lives in AGENTS.md.
 settings_template = root / 'studio' / 'docs' / 'settings-local-template.md'
 if settings_template.exists():
     settings_template.unlink()
 
-# Clean remaining runtime-specific references that did not include a trailing slash.
 replacements = [
     ('.claude/settings.local.json', 'AGENTS.local.md'),
     ('.claude/settings.json', 'AGENTS.md'),
+    ('.claude/', 'studio/'),
+    ('CLAUDE.md', 'AGENTS.md'),
+    ('AskUserQuestion', 'user-decision checkpoint'),
     ('`.claude`', '`agents/`, `skills/`, `rules/`, and `studio/`'),
     (' .claude ', ' studio framework directories '),
     ('model: sonnet', 'execution-profile: default'),
@@ -37,8 +38,6 @@ for p in list(root.rglob('*')):
     if text != original:
         p.write_text(text, encoding='utf-8')
 
-# The upstream skill tester validated Claude frontmatter/tools and approval gates.
-# Replace it with a tester for the Codex single-agent contract.
 skill_test = root / 'skills' / 'skill-test' / 'SKILL.md'
 if skill_test.exists():
     skill_test.write_text('''---
@@ -60,7 +59,7 @@ For one skill or all skills, check:
 1. **Frontmatter** — `name`, `description`, `argument-hint`, and `user-invocable` exist.
 2. **Workflow structure** — the skill has a clear ordered procedure, phases, or equivalent steps.
 3. **Outcome/verdict** — the skill defines what completion, PASS/FAIL, READY/BLOCKED, or equivalent means where applicable.
-4. **Codex compatibility** — the active skill contains no `.claude/`, `CLAUDE.md`, Claude model selection, Claude-only tool declarations, or assumptions that independent subagents actually run.
+4. **Codex compatibility** — the active skill contains no legacy Claude runtime paths, model-selection metadata, Claude-only tool declarations, or assumptions that independent role processes actually run.
 5. **Role routing** — when specialist expertise is needed, the skill identifies an `agents/*.md` role profile or clearly names the role to apply.
 6. **Autonomy compatibility** — routine reversible writes must not require per-file approval. Material product decisions may use a user-decision checkpoint, governed by `AGENTS.md`.
 7. **Source-of-truth discipline** — project-specific docs/ADRs/requirements are read before implementation when relevant.
@@ -76,7 +75,7 @@ Enumerate all `skills/*/SKILL.md` and all `agents/*.md` role profiles. Report:
 - total skills and role profiles;
 - missing or malformed frontmatter;
 - broken referenced paths;
-- active Claude-runtime references outside `docs/upstream/` and `studio/CODEX_ADAPTATION.md`;
+- active legacy runtime references outside preserved upstream/reference documentation;
 - skills that still assume real multi-agent execution rather than single-agent role switching;
 - skills whose approval protocol conflicts with `AGENTS.md` autonomy;
 - missing next-step or verification guidance.
@@ -96,15 +95,13 @@ Prioritize remediation as BLOCKING, HIGH, MEDIUM, or LOW.
 A skill-test pass is complete when findings are reported with exact file paths and specific remediation. If the user asked to fix the findings, apply the fixes in the same pass and re-run the audit logic.
 ''', encoding='utf-8')
 
-# Add explicit Codex notes to framework docs that describe old automatic hook behavior.
 hooks_ref = root / 'studio' / 'docs' / 'hooks-reference.md'
 if hooks_ref.exists():
     text = hooks_ref.read_text(encoding='utf-8')
-    note = '''# Codex execution note\n\nIn this repository, files under `scripts/hooks/` are reusable validation/session scripts. They are **not automatically registered by Codex**. Run relevant validators explicitly or wire them into CI/project scripts later. Any upstream description of PreToolUse/PostToolUse/session hook registration is reference behavior only and does not override `AGENTS.md`.\n\n'''
+    note = '''# Codex execution note\n\nIn this repository, files under `scripts/hooks/` are reusable validation/session scripts. They are **not automatically registered by Codex**. Run relevant validators explicitly or wire them into CI/project scripts later. Any upstream description of automatic tool/session hook registration is reference behavior only and does not override `AGENTS.md`.\n\n'''
     if not text.startswith('# Codex execution note'):
         hooks_ref.write_text(note + text, encoding='utf-8')
 
-# Remove migration helper scripts and one-shot workflow from the resulting tree.
 for p in [
     root / '.github' / 'workflows' / 'adapt-codex.yml',
     root / 'scripts' / 'adapt_codex.py',
