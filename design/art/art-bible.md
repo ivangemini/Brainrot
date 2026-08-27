@@ -1,9 +1,9 @@
 # Pigeon Maxxing — Art Bible
 
-> **Status**: Approved for pre-production v0.1
+> **Status**: Approved for production direction v0.2
 > **Last Updated**: 2026-08-27
 > **Visual Identity Anchor**: Dead-Serious Urban Absurdity
-> **Target**: Mobile/desktop web, 2D/2.5D layered raster presentation
+> **Target**: Mobile/desktop web, 2D/2.5D layered generated-raster presentation
 
 ## 1. Visual Identity Statement
 
@@ -78,7 +78,7 @@ Begin in an ordinary park/street reality. Every impossible visual should feel li
 
 ### UI
 - Rounded-rect cards with strong hierarchy; simple geometric language distinct from the illustrated world.
-- Upgrade branches each get a stable icon silhouette.
+- Upgrade branches each get a stable **raster icon silhouette**.
 - Numeric information is dense but must never feel like a spreadsheet: icon + level + effect + cost + milestone preview.
 
 ## 4. Color System
@@ -112,7 +112,7 @@ Every semantic state must have icon/shape/text backup. Do not encode affordabili
 ## 5. Character / Pigeon Art Direction
 
 ### Production model
-The pigeon is a layered composite, not a single final skin.
+The pigeon is a layered composite of **generated raster textures**, not a single final skin and not vector geometry.
 
 Recommended runtime layer order:
 1. shadow;
@@ -132,7 +132,7 @@ Recommended runtime layer order:
 15. foreground hit/VFX.
 
 ### Visual tiers
-Each upgrade branch can have many numerical levels but only 6–10 major art states in a long progression tier. Use milestone swaps plus procedural effects between them.
+Each upgrade branch can have many numerical levels but only 6–10 major art states in a long progression tier. Use milestone swaps plus runtime motion/effect treatment between them.
 
 Example Beak progression language:
 - ordinary;
@@ -173,8 +173,9 @@ Every new growth stage should answer “how does the world cope with this pigeon
 ## 7. UI / HUD Visual Direction
 
 ### Rendering split
-- Phaser/WebGL canvas: pigeon, world, particles, minigames, camera.
-- HTML/CSS overlay: resource bars, upgrade drawer/cards, collection, settings, platform-safe dialogs.
+- Phaser/WebGL canvas: pigeon, world, generated raster VFX textures, minigames, camera.
+- HTML/CSS overlay: layout, typography, resource bars, upgrade drawer/cards, collection, settings, platform-safe dialogs.
+- Illustrated UI elements and icons are generated raster PNG/WebP assets. CSS may construct panels/layout but must not become an illustration pipeline.
 
 ### Main hierarchy
 1. Currency / income state.
@@ -186,7 +187,7 @@ Every new growth stage should answer “how does the world cope with this pigeon
 
 ### Upgrade card anatomy
 Each branch card shows:
-- branch icon/name;
+- raster icon + branch name;
 - current level;
 - current mechanical effect;
 - next level delta;
@@ -207,7 +208,7 @@ Ad buttons must visually differ from normal purchase buttons and explicitly stat
 Target total peck cycle: ~120–190 ms depending combo state.
 - head jab;
 - body squash/recoil;
-- feather/crumb particle;
+- generated raster feather/crumb texture particle;
 - floating value;
 - tiny impact pulse.
 
@@ -215,7 +216,7 @@ Target total peck cycle: ~120–190 ms depending combo state.
 Use layers of intensity rather than spawning unlimited particles:
 - tier 1: faster motion;
 - tier 2: stronger floating-number treatment;
-- tier 3: wing motion + limited particles;
+- tier 3: wing motion + limited raster particles;
 - tier 4: restrained screen shake + aura/hit streak;
 - max tier: short controlled visual burst, never unreadable strobing.
 
@@ -232,17 +233,20 @@ Pool recurring particles and floating numbers. Cap simultaneous decorative parti
 
 ## 9. Asset Standards
 
-### Source/runtime formats
-- Master raster source: PNG with alpha where editable transparency is required.
-- Runtime raster: WebP with alpha when quality/size is acceptable.
-- Use sprite atlases for small accessories, icons and repeated VFX.
-- SVG allowed for simple UI icons/logos only when rasterization/performance remains predictable; do not build the runtime world as SVG-heavy placeholder art.
+### Source/runtime formats — hard contract
+- **All player-facing illustrated production art is generated raster art.**
+- Allowed production asset formats: PNG and WebP, including alpha textures and raster atlas pages.
+- First playable may use generated PNG textures for deterministic build-time generation; later production optimization may transcode suitable assets to WebP.
+- Use raster sprite atlases for small accessories, icons and repeated VFX once asset volume justifies them.
+- **SVG is not part of the production asset pipeline, including icons and logos.**
+- Do not use CSS/canvas/vector primitives as replacement art for the pigeon, world, props, accessories, illustrated icons or production VFX. HTML/CSS remains valid for UI layout, typography and panel geometry.
+- A temporary visual that would violate these rules is not acceptable merely because it is called a placeholder.
 
 ### Resolution targets
-- Base pigeon body master: 1024×1024 minimum working canvas per major body tier.
+- Base pigeon body master: 1024×1024 minimum working canvas per major body tier for production replacements.
 - Large hero/mutation masters: 1536–2048 px where needed for zoom/reframe.
-- Accessories: authored against the same normalized pigeon anchor canvas.
-- UI icons: 128–256 px source depending prominence.
+- Accessories: authored/generated against the same normalized pigeon anchor canvas.
+- UI icons: 128–256 px raster source depending prominence.
 - Atlas target: prefer <=2048×2048 pages for broad mobile compatibility and memory predictability; split logically by loading group.
 
 ### Naming
@@ -256,6 +260,8 @@ Examples:
 - `vfx_tap_crit_01.webp`
 - `ui_upgrade_beak_icon.webp`
 
+The deterministic first-playable generator uses shorter runtime paths under `public/assets/`; production asset imports should converge toward this naming grammar as the art pack expands.
+
 ### Anchor discipline
 All modular pigeon parts must use documented pivot/anchor positions so they can be swapped without per-asset manual offsets. Maintain a canonical attachment manifest for head, beak, wings, neck, body and feet.
 
@@ -265,24 +271,26 @@ Initial load should include only onboarding/main-screen essentials. Later growth
 ## 10. Style Prohibitions
 
 Do not:
+- introduce SVG/vector player-facing art anywhere in the production asset path;
+- draw the pigeon/world/props/illustrated icons from CSS shapes or runtime vector primitives;
 - mix photorealistic pigeon photography with flat cartoon accessories without a unifying treatment;
 - make every milestone a random costume swap;
 - use tiny detail as the only signal of a meaningful upgrade;
 - rely on glow everywhere to imply value;
 - cover the pigeon with UI;
 - use excessive screen shake or flashing during sustained tapping;
-- create production screens from generic dark flat panels with placeholder SVG art;
+- create production screens from generic dark flat panels with placeholder art;
 - recreate recognizable protected meme artwork/branding one-to-one;
 - make late-game surrealism appear before ordinary city scale has been established.
 
 ## 11. Asset Production Workflow
 
 1. Lock canonical base pigeon pose and anchor canvas.
-2. Produce body/growth silhouette tiers.
-3. Produce branch milestone layer sets against the canonical anchors.
-4. Produce environment reaction states tied to growth thresholds.
-5. Produce VFX sprite/particle assets.
-6. Export runtime WebP/atlases.
+2. Generate body/growth silhouette tiers as raster masters/textures.
+3. Generate branch milestone layer sets against the canonical anchors.
+4. Generate environment reaction states tied to growth thresholds.
+5. Generate raster VFX/particle assets.
+6. Export runtime PNG/WebP/atlases; never SVG.
 7. Validate at actual phone-size gameplay scale.
 8. Validate composition combinations (not only assets in isolation).
 9. Reject assets that only look good as large concept art but fail in runtime.
@@ -295,4 +303,5 @@ A milestone asset passes only if:
 - it does not obscure tap feedback or growth meter hierarchy;
 - it conforms to canonical pivots/anchors;
 - its runtime cost fits loading/memory targets;
-- it communicates progression without requiring explanatory text.
+- it communicates progression without requiring explanatory text;
+- it is a generated raster production asset and introduces no SVG/vector fallback.
