@@ -23,7 +23,7 @@ export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
   host.className = 'pigeon-drop-host';
   host.innerHTML = `
     <button type="button" class="pigeon-drop-offer glass-panel" hidden>
-      <img src="/assets/generated/pigeon_drop_target.png" alt="" />
+      <img src="/assets/ui/tap_burst.png" alt="" />
       <span><small>NEW EVENT READY</small><strong>PIGEON DROP</strong></span>
       <b>PLAY</b>
     </button>
@@ -69,7 +69,7 @@ export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
       startHandler = undefined;
     },
     showActive: (onDrop) => {
-      root.classList.add('event-mode');
+      root.classList.add('event-mode', 'pigeon-drop-mode');
       dropHandler = onDrop;
       offer.hidden = true;
       resultShell.hidden = true;
@@ -157,12 +157,13 @@ export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
       continueButton.addEventListener('click', onContinue, { once: true });
     },
     hideEvent: () => {
-      root.classList.remove('event-mode');
+      root.classList.remove('event-mode', 'pigeon-drop-mode');
       hud.hidden = true;
       resultShell.hidden = true;
       resultShell.replaceChildren();
       countdown.classList.remove('visible');
       action.disabled = true;
+      action.classList.remove('is-ready');
       dropHandler = undefined;
     },
     destroy: () => {
