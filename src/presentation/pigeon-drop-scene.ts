@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
 import { getGrowthVisual } from '../content/growth-visual-content';
 import { MUTATION_DEFINITIONS } from '../content/mutation-content';
-import { PigeonDropSession, type PigeonDropSnapshot } from '../domain/pigeon-drop';
+import {
+  PigeonDropSession,
+  type PigeonDropAccuracy,
+  type PigeonDropSnapshot,
+} from '../domain/pigeon-drop';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 
@@ -175,7 +179,7 @@ export class PigeonDropScene extends Phaser.Scene {
     }
   }
 
-  private playImpact(points: number, accuracy: PigeonDropSnapshot['lastImpact'] extends infer _T ? string : never): void {
+  private playImpact(points: number, accuracy: PigeonDropAccuracy): void {
     const x = this.getDropX();
     const y = this.getTargetPosition(0.5).y;
     const impact = this.add.image(x, y, IMPACT_TEXTURE)
