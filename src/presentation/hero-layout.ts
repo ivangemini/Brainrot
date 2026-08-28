@@ -76,8 +76,7 @@ export function getCenteredHeroBox(viewportWidth: number, viewportHeight: number
 
 /**
  * Returns the image origin needed to place the pigeon focal point at the exact
- * viewport center for any scale. Both sharp and decorative layers use this so
- * the background copy cannot drift into a visible second pigeon.
+ * viewport center for any scale.
  */
 export function getMemePigeonFocalPosition(
   viewportWidth: number,
@@ -96,8 +95,9 @@ export function getMemePigeonFocalPosition(
 
 /**
  * Places the reference scene so the pigeon itself, rather than the rectangular
- * source image, is centered on the viewport. This lets the source raster extend
- * beneath decorative UI while keeping the readable bird completely clear.
+ * source image, is centered on the viewport. Stage 0 already uses most of the
+ * available safe area: the meme face must read instantly at portal-thumbnail
+ * and first-session scale, while Growth can still expand to the safe boundary.
  */
 export function getMemePigeonScenePlacement(
   viewportWidth: number,
@@ -114,7 +114,7 @@ export function getMemePigeonScenePlacement(
     (centered.height * 0.92) / silhouetteHeight,
   );
   const minPresentationScale = (viewportWidth * (viewportHeight > viewportWidth ? 1.05 : 0.61)) / sourceWidth;
-  const growthFactor = Math.min(1, 0.80 + Math.max(0, growthProgress) * 0.035);
+  const growthFactor = Math.min(1, 0.90 + Math.max(0, growthProgress) * 0.018);
   const scale = Math.min(fitScale, Math.max(minPresentationScale, fitScale * growthFactor));
 
   const { x, y } = getMemePigeonFocalPosition(
