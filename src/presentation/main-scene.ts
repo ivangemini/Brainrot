@@ -1,11 +1,10 @@
 import Phaser from 'phaser';
+import { getGrowthVisual, getUniqueGrowthVisuals } from '../content/growth-visual-content';
 import { MUTATION_DEFINITIONS, MUTATION_ORDER, type MutationId } from '../content/mutation-content';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 
-const HERO_TEXTURE = 'generated-main-hero';
-const HERO_PATH = '/assets/generated/main_scene_hero.webp';
 const MUTATION_TEXTURE_PREFIX = 'generated-mutation-';
 
 export class MainScene extends Phaser.Scene {
@@ -18,6 +17,7 @@ export class MainScene extends Phaser.Scene {
   private unsubscribe?: () => void;
   private lastGrowthStage = 0;
   private heroBaseScale = 1;
+  private mutationBaseScale = 1;
   private readySignaled = false;
   private readonly onResize = (): void => this.layout();
 
@@ -28,7 +28,9 @@ export class MainScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    this.load.image(HERO_TEXTURE, HERO_PATH);
+    for (const visual of getUniqueGrowthVisuals()) {
+      if (!this.textures.exists(visual.textureKey)) this.load.image(visual.textureKey, visual.art);
+    }
     for (const mutationId of MUTATION_ORDER) {
       this.load.image(`${MUTATION_TEXTURE_PREFIX}${mutationId}`, MUTATION_DEFINITIONS[mutationId].art);
     }
@@ -36,7 +38,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
+    const initialVisual = getGrowthVisual(0);
+    this.hero = this.add.image(0, 0, initialVisual.textureKey).setOrigin(0.5).setDepth(0);
     this.mutationLayer = this.add
       .image(0, 0, `${MUTATION_TEXTURE_PREFIX}muscle`)
       .setOrigin(0.5)
@@ -77,10 +80,11 @@ export class MainScene extends Phaser.Scene {
     const stageId = this.lastState
       ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
       : 0;
-    const growthZoom = 1 + Math.min(stageId, 6) * 0.018;
+    const visual = getGrowthVisual(stageId);
     const coverScale = Math.max(sceneWidth / this.hero.width, sceneHeight / this.hero.height);
 
-    this.heroBaseScale = coverScale * growthZoom;
+    this.heroBaseScale = coverScale * visual.sceneZoom;
+    this.mutationBaseScale = this.heroBaseScale * visual.mutationScale;
     this.hero
       .setPosition(sceneWidth / 2, sceneHeight / 2)
       .setScale(this.heroBaseScale)
@@ -89,23 +93,29 @@ export class MainScene extends Phaser.Scene {
     if (this.mutationLayer) {
       this.mutationLayer
         .setPosition(this.hero.x, this.hero.y)
-        .setScale(this.heroBaseScale)
+        .setScale(this.mutationBaseScale)
         .setAngle(0);
     }
   }
 
   private renderState(state: Readonly<GameState>): void {
+    const hadPreviousState = this.lastState !== undefined;
     const previousStage = this.lastGrowthStage;
     const previousMutation = this.lastState?.mutationIds.at(-1);
     const total = getTotalUpgradeLevel(state.branchLevels);
     const stage = getGrowthStage(total);
     const currentMutation = state.mutationIds.at(-1);
+    const stageChanged = hadPreviousState && stage.id !== previousStage;
+
     this.lastGrowthStage = stage.id;
     this.lastState = state;
-    this.applyVisualState(currentMutation);
 
-    if (stage.id > previousStage && (previousStage !== 0 || total >= 10)) {
-      this.playGrowthCeremony(stage.name);
+    const sceneChanged = stageChanged
+      ? this.transitionGrowthVisual(stage.id, currentMutation)
+      : this.applyVisualState(stage.id, currentMutation);
+
+    if (hadPreviousState && stage.id > previousStage) {
+      this.playGrowthCeremony(stage.name, stage.subtitle, sceneChanged);
     }
 
     if (currentMutation && currentMutation !== previousMutation) {
@@ -113,24 +123,93 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
-  private applyVisualState(mutationId: MutationId | undefined): void {
+  /** Returns true when the stage changed to a different scene texture. */
+  private transitionGrowthVisual(stageId: number, mutationId: MutationId | undefined): boolean {
+    if (!this.hero) return false;
+    const nextVisual = getGrowthVisual(stageId);
+    const previousTexture = this.hero.texture.key;
+    if (previousTexture === nextVisual.textureKey) {
+      this.applyVisualState(stageId, mutationId);
+      return false;
+    }
+
+    const oldX = this.hero.x;
+    const oldY = this.hero.y;
+    const oldScaleX = this.hero.scaleX;
+    const oldScaleY = this.hero.scaleY;
+    const ghost = this.add
+      .image(oldX, oldY, previousTexture)
+      .setOrigin(0.5)
+      .setScale(oldScaleX, oldScaleY)
+      .setDepth(-0.2)
+      .setAlpha(1);
+
+    this.hero.setTexture(nextVisual.textureKey);
+    this.applyVisualState(stageId, mutationId);
+    this.hero.setAlpha(0).setScale(this.heroBaseScale * 1.055);
+
+    this.tweens.add({
+      targets: ghost,
+      alpha: 0,
+      scaleX: oldScaleX * 0.96,
+      scaleY: oldScaleY * 0.96,
+      duration: 420,
+      ease: 'Cubic.In',
+      onComplete: () => ghost.destroy(),
+    });
+    this.tweens.add({
+      targets: this.hero,
+      alpha: 1,
+      scaleX: this.heroBaseScale,
+      scaleY: this.heroBaseScale,
+      duration: 460,
+      ease: 'Back.Out',
+      onComplete: () => this.hero?.setAlpha(1).setScale(this.heroBaseScale),
+    });
+
+    if (this.mutationLayer && mutationId) {
+      this.mutationLayer.setAlpha(0.25).setScale(this.mutationBaseScale * 1.04);
+      this.tweens.add({
+        targets: this.mutationLayer,
+        alpha: 1,
+        scaleX: this.mutationBaseScale,
+        scaleY: this.mutationBaseScale,
+        duration: 500,
+        ease: 'Quad.Out',
+      });
+    }
+    return true;
+  }
+
+  /** Returns true when the requested stage uses a different texture than the current image. */
+  private applyVisualState(stageId: number, mutationId: MutationId | undefined): boolean {
+    if (!this.hero) return false;
+    const visual = getGrowthVisual(stageId);
+    const sceneChanged = this.hero.texture.key !== visual.textureKey;
+    if (sceneChanged) this.hero.setTexture(visual.textureKey);
     this.layout();
-    if (!this.mutationLayer) return;
+
+    if (!this.mutationLayer) return sceneChanged;
     if (!mutationId) {
       this.mutationLayer.setAlpha(0);
-      return;
+      return sceneChanged;
     }
     this.mutationLayer
       .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
+      .setScale(this.mutationBaseScale)
       .setAlpha(1);
+    return sceneChanged;
   }
 
   private isPointerOnPigeon(x: number, y: number): boolean {
     if (!this.hero) return false;
-    const pigeonCenterX = this.hero.x + this.hero.displayWidth * 0.035;
-    const pigeonCenterY = this.hero.y + this.hero.displayHeight * 0.045;
-    const radiusX = this.hero.displayWidth * 0.31;
-    const radiusY = this.hero.displayHeight * 0.42;
+    const visual = getGrowthVisual(this.lastGrowthStage);
+    const left = this.hero.x - this.hero.displayWidth / 2;
+    const top = this.hero.y - this.hero.displayHeight / 2;
+    const pigeonCenterX = left + this.hero.displayWidth * visual.hitbox.centerX;
+    const pigeonCenterY = top + this.hero.displayHeight * visual.hitbox.centerY;
+    const radiusX = this.hero.displayWidth * visual.hitbox.radiusX;
+    const radiusY = this.hero.displayHeight * visual.hitbox.radiusY;
     const dx = (x - pigeonCenterX) / radiusX;
     const dy = (y - pigeonCenterY) / radiusY;
     return dx * dx + dy * dy <= 1;
@@ -183,7 +262,7 @@ export class MainScene extends Phaser.Scene {
     });
   }
 
-  private playGrowthCeremony(stageName: string): void {
+  private playGrowthCeremony(stageName: string, subtitle: string, sceneChanged: boolean): void {
     if (!this.hero) return;
     const width = this.scale.width;
     const height = this.scale.height;
@@ -191,21 +270,25 @@ export class MainScene extends Phaser.Scene {
     const sceneWidth = portrait ? width : width * 0.77;
     const sceneHeight = portrait ? height * 0.68 : height;
 
-    this.cameras.main.shake(240, 0.004);
-    this.tweens.killTweensOf(this.hero);
-    this.tweens.add({
-      targets: this.hero,
-      scaleX: this.heroBaseScale * 1.035,
-      scaleY: this.heroBaseScale * 1.035,
-      duration: 180,
-      yoyo: true,
-      ease: 'Quad.Out',
-      onComplete: () => this.hero?.setScale(this.heroBaseScale),
-    });
+    this.cameras.main.flash(sceneChanged ? 260 : 170, 238, 232, 194, false);
+    this.cameras.main.shake(sceneChanged ? 330 : 240, sceneChanged ? 0.0052 : 0.004);
 
-    const label = this.add.text(sceneWidth / 2, sceneHeight * 0.25, stageName.toUpperCase(), {
+    if (!sceneChanged) {
+      this.tweens.killTweensOf(this.hero);
+      this.tweens.add({
+        targets: this.hero,
+        scaleX: this.heroBaseScale * 1.035,
+        scaleY: this.heroBaseScale * 1.035,
+        duration: 180,
+        yoyo: true,
+        ease: 'Quad.Out',
+        onComplete: () => this.hero?.setScale(this.heroBaseScale),
+      });
+    }
+
+    const label = this.add.text(sceneWidth / 2, sceneHeight * 0.23, stageName.toUpperCase(), {
       fontFamily: 'system-ui, sans-serif',
-      fontSize: portrait ? '28px' : '36px',
+      fontSize: portrait ? '28px' : '38px',
       fontStyle: 'bold',
       color: '#f5f1e8',
       stroke: '#17191e',
@@ -213,14 +296,27 @@ export class MainScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setDepth(150).setAlpha(0);
 
+    const sublabel = this.add.text(sceneWidth / 2, sceneHeight * 0.295, subtitle, {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: portrait ? '13px' : '16px',
+      fontStyle: 'bold',
+      color: '#b8ee62',
+      stroke: '#17191e',
+      strokeThickness: 5,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(150).setAlpha(0);
+
     this.tweens.add({
-      targets: label,
+      targets: [label, sublabel],
       alpha: { from: 0, to: 1 },
-      scale: { from: 0.7, to: 1 },
-      duration: 180,
+      y: '-=8',
+      duration: 190,
       yoyo: true,
-      hold: 650,
-      onComplete: () => label.destroy(),
+      hold: sceneChanged ? 820 : 650,
+      onComplete: () => {
+        label.destroy();
+        sublabel.destroy();
+      },
     });
   }
 
@@ -229,15 +325,15 @@ export class MainScene extends Phaser.Scene {
     this.mutationLayer
       .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
       .setAlpha(0)
-      .setScale(this.heroBaseScale * 1.08);
+      .setScale(this.mutationBaseScale * 1.08);
     this.cameras.main.flash(220, 245, 216, 107, false);
     this.cameras.main.shake(260, mutationId === 'muscle' ? 0.0045 : 0.0032);
     this.tweens.killTweensOf(this.mutationLayer);
     this.tweens.add({
       targets: this.mutationLayer,
       alpha: 1,
-      scaleX: this.heroBaseScale,
-      scaleY: this.heroBaseScale,
+      scaleX: this.mutationBaseScale,
+      scaleY: this.mutationBaseScale,
       duration: 420,
       ease: 'Back.Out',
     });
