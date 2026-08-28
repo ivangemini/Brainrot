@@ -36,8 +36,6 @@ export class MemeSceneBackdrop {
       const scaleX = (leftGap + 2) / cropWidth;
       const scaleY = sceneBounds.height / sourceHeight;
 
-      // Negative X scale makes the visible edge next to the main scene resolve
-      // to source x=0, eliminating the hard vertical seam from the old stretch.
       this.leftFill
         .setCrop(0, 0, cropWidth, sourceHeight)
         .setScale(-scaleX, scaleY)
@@ -55,13 +53,13 @@ export class MemeSceneBackdrop {
       const scaleX = viewportWidth / sourceWidth;
       const scaleY = (bottomGap + 2) / cropHeight;
 
-      // Mirror the entire last water band vertically. Its top boundary resolves
-      // to the same final raster row as the main scene, while the reflection
-      // continues naturally toward the bottom tray.
+      // With origin 0,0 and a negative Y scale, the source crop's bottom edge
+      // lands at imageY - sourceHeight*scaleY. Position the full source bottom
+      // exactly on sceneBottom so the mirrored water starts at the raster edge.
       this.bottomFill
         .setCrop(0, cropY, sourceWidth, cropHeight)
         .setScale(scaleX, -scaleY)
-        .setPosition(0, sceneBottom + bottomGap + 1)
+        .setPosition(0, sceneBottom + sourceHeight * scaleY)
         .setVisible(true);
     } else {
       this.bottomFill.setVisible(false);
