@@ -99,3 +99,7 @@ export const PIGEON_DROP: PigeonDropDefinition = {
   referenceTapsPerSecond: 3,
   referenceComboMultiplier: 1.15,
 } as const;
+
+export function isPigeonEventId(value: unknown): value is PigeonEventId {
+  return value === 'bread-rush' || value === 'pigeon-drop';
+}
