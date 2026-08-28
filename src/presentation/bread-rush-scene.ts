@@ -4,7 +4,6 @@ import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../d
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
-import { MemeSceneBackdrop } from './meme-scene-backdrop';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
 const BREAD_TEXTURE = 'generated-bread-target';
@@ -20,7 +19,6 @@ export class BreadRushScene extends Phaser.Scene {
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
   private hero: Phaser.GameObjects.Image | undefined;
-  private backdrop: MemeSceneBackdrop | undefined;
   private heroBaseScale = 1;
   private completedSignaled = false;
   private readonly onResize = (): void => this.layout();
@@ -45,11 +43,10 @@ export class BreadRushScene extends Phaser.Scene {
     this.completedSignaled = false;
     this.targetSprites.clear();
     this.session = new BreadRushSession();
-    this.cameras.main.setBackgroundColor('#17382f');
+    this.cameras.main.setBackgroundColor('#0b171b');
 
-    // Bread Rush keeps one full hero layer. Environment-only edge crops extend
-    // the portrait reference beneath live targets without cloning the pigeon.
-    this.backdrop = new MemeSceneBackdrop(this, HERO_TEXTURE, -10);
+    // Event mode reuses the exact same single meme raster. Empty landscape
+    // gutters are deliberate HUD matte, never stretched or mirrored pigeon art.
     this.hero = this.add.image(0, 0, HERO_TEXTURE)
       .setOrigin(0.5)
       .setDepth(0);
@@ -63,7 +60,6 @@ export class BreadRushScene extends Phaser.Scene {
       this.session = undefined;
       this.callbacks = undefined;
       this.hero = undefined;
-      this.backdrop = undefined;
     });
     this.layout();
     this.callbacks?.onSnapshot(this.session.getSnapshot());
@@ -97,15 +93,6 @@ export class BreadRushScene extends Phaser.Scene {
         .setPosition(placement.x, placement.y)
         .setScale(this.heroBaseScale)
         .setAngle(0);
-
-      const displayWidth = this.hero.width * this.heroBaseScale;
-      const displayHeight = this.hero.height * this.heroBaseScale;
-      this.backdrop?.layout(width, height, this.hero.width, this.hero.height, {
-        x: placement.x - displayWidth / 2,
-        y: placement.y - displayHeight / 2,
-        width: displayWidth,
-        height: displayHeight,
-      });
 
       const safeRect = getHeroSafeRect(width, height);
       this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, placement.silhouetteBounds, 2));
