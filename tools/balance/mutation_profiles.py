@@ -118,11 +118,11 @@ def mutated_snapshot(
 
 
 def offline_efficiency(config: dict, levels: Dict[str, int], tuning: MutationTuning) -> float:
-    brain = config["branches"]["brain"]
-    base = float(config["offline"]["baseEfficiency"]) + (
-        float(brain["offlineEfficiencyPerLevel"]) * levels["brain"]
+    offline = config["offline"]
+    base = float(offline["baseEfficiency"]) + (
+        float(offline["brainEfficiencyPerLevel"]) * levels["brain"]
     )
-    hard_cap = float(config["offline"]["efficiencyCap"])
+    hard_cap = float(offline["efficiencyCap"])
     return min(hard_cap, base + tuning.offline_efficiency_bonus)
 
 
