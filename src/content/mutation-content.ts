@@ -1,3 +1,5 @@
+import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
+
 export type MutationId = 'muscle' | 'business' | 'chaos';
 
 export interface MutationDefinition {
@@ -30,6 +32,9 @@ export const CHAOS_EVENT_REWARD_MULTIPLIER = 1.15;
 
 export const MUTATION_ORDER: readonly MutationId[] = ['muscle', 'business', 'chaos'] as const;
 
+// Until mutation-specific cosmetics are regenerated around the approved meme
+// identity, every choice intentionally previews the canonical blue/orange-lipped
+// pigeon. Gameplay modifiers differ; the character identity never does.
 export const MUTATION_DEFINITIONS: Record<MutationId, MutationDefinition> = {
   muscle: {
     id: 'muscle',
@@ -41,7 +46,7 @@ export const MUTATION_DEFINITIONS: Record<MutationId, MutationDefinition> = {
       'Combo cap +0.15',
       'Passive production unchanged',
     ],
-    art: '/assets/generated/mutation_muscle.png',
+    art: MEME_PIGEON_HERO_DATA_URL,
   },
   business: {
     id: 'business',
@@ -53,7 +58,7 @@ export const MUTATION_DEFINITIONS: Record<MutationId, MutationDefinition> = {
       'Offline efficiency +10%',
       'Upgrade prices unchanged',
     ],
-    art: '/assets/generated/mutation_business.png',
+    art: MEME_PIGEON_HERO_DATA_URL,
   },
   chaos: {
     id: 'chaos',
@@ -65,7 +70,7 @@ export const MUTATION_DEFINITIONS: Record<MutationId, MutationDefinition> = {
       'Crit multiplier ×1.15',
       'Pigeon Event rewards ×1.15',
     ],
-    art: '/assets/generated/mutation_chaos.png',
+    art: MEME_PIGEON_HERO_DATA_URL,
   },
 };
 
