@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "art:generate": "node tools/art/generate-raster-assets.mjs && node tools/art/refine-raster-assets.mjs && node tools/art/generate-event-assets.mjs && node tools/art/generate-mutation-assets.mjs",
+    "art:generate": "node tools/art/generate-raster-assets.mjs && node tools/art/refine-raster-assets.mjs && node tools/art/generate-growth-stage-assets.mjs && node tools/art/generate-event-assets.mjs && node tools/art/generate-mutation-assets.mjs",
     "predev": "npm run art:generate",
     "dev": "vite",
     "prebuild": "npm run art:generate",
@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
+    "sharp": "^0.34.3",
     "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "4.1.11"

@@ -1,4 +1,5 @@
 import { chromium } from '@playwright/test';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const baseURL = process.env.VISUAL_QA_URL ?? 'http://127.0.0.1:4173';
@@ -23,23 +24,40 @@ async function openPage(viewport, label) {
   return page;
 }
 
-function mutationSeed() {
-  const now = Date.now();
+function baseState(branchLevels, mutationIds = []) {
+  const total = Object.values(branchLevels).reduce((sum, level) => sum + level, 0);
+  const thresholds = [0, 10, 25, 50, 90, 150, 240, 360, 420];
+  const discoveredGrowthStages = thresholds
+    .map((threshold, id) => ({ threshold, id }))
+    .filter(({ threshold }) => total >= threshold)
+    .map(({ id }) => id);
   return {
     schemaVersion: 1,
     balanceVersion: 'visual-qa',
     feathers: 1e20,
-    branchLevels: { beak: 30, body: 30, nest: 25, wings: 25, swag: 20, brain: 20 },
-    mutationIds: [],
+    branchLevels,
+    mutationIds,
     comboCharge: 0,
     lastTapAt: 0,
     saveRevision: 11,
-    lastSavedAt: now,
-    discoveredGrowthStages: [0, 1, 2, 3, 4, 5],
+    lastSavedAt: Date.now(),
+    discoveredGrowthStages,
     appliedRewardIds: [],
     events: { breadRushBestScore: 17, breadRushRuns: 2, breadRushCooldownSeconds: 0 },
   };
 }
+
+function mutationSeed() {
+  return baseState({ beak: 30, body: 30, nest: 25, wings: 25, swag: 20, brain: 20 });
+}
+
+const growthFixtures = [
+  { stageId: 4, levels: { beak: 20, body: 20, nest: 15, wings: 15, swag: 10, brain: 10 } },
+  { stageId: 5, levels: { beak: 30, body: 30, nest: 25, wings: 25, swag: 20, brain: 20 } },
+  { stageId: 6, levels: { beak: 40, body: 40, nest: 40, wings: 40, swag: 40, brain: 40 } },
+  { stageId: 7, levels: { beak: 60, body: 60, nest: 60, wings: 60, swag: 60, brain: 60 } },
+  { stageId: 8, levels: { beak: 70, body: 70, nest: 70, wings: 70, swag: 70, brain: 70 } },
+];
 
 const desktop = await openPage({ width: 1440, height: 900 }, 'desktop');
 await desktop.screenshot({ path: `${outputDir}/desktop-main.png`, fullPage: true });
@@ -49,25 +67,45 @@ const mobile = await openPage({ width: 390, height: 844 }, 'mobile');
 await mobile.screenshot({ path: `${outputDir}/mobile-main.png`, fullPage: true });
 await mobile.close();
 
+const growthCanvasHashes = {};
+for (const fixture of growthFixtures) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await context.addInitScript((seed) => {
+    localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
+  }, baseState(fixture.levels, ['business']));
+  const page = await context.newPage();
+  attachIssueListeners(page, `growth-${fixture.stageId}`);
+  await page.goto(baseURL, { waitUntil: 'networkidle' });
+  await page.waitForSelector('#game-canvas canvas', { state: 'visible' });
+  await page.waitForTimeout(280);
+  const canvasBuffer = await page.locator('#game-canvas canvas').screenshot();
+  growthCanvasHashes[fixture.stageId] = createHash('sha256').update(canvasBuffer).digest('hex');
+  await page.screenshot({ path: `${outputDir}/desktop-growth-stage-${fixture.stageId}.png`, fullPage: true });
+  await page.close();
+  await context.close();
+}
+
+if (new Set(Object.values(growthCanvasHashes)).size !== growthFixtures.length) {
+  issues.push(`growth: major Growth stage canvas renders are not all distinct (${JSON.stringify(growthCanvasHashes)})`);
+}
+
+const growthMobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await growthMobileContext.addInitScript((seed) => {
+  localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
+}, baseState(growthFixtures[2].levels, ['business']));
+const growthMobilePage = await growthMobileContext.newPage();
+attachIssueListeners(growthMobilePage, 'growth-mobile-stage-6');
+await growthMobilePage.goto(baseURL, { waitUntil: 'networkidle' });
+await growthMobilePage.waitForSelector('#game-canvas canvas', { state: 'visible' });
+await growthMobilePage.waitForTimeout(280);
+await growthMobilePage.screenshot({ path: `${outputDir}/mobile-growth-stage-6.png`, fullPage: true });
+await growthMobilePage.close();
+await growthMobileContext.close();
+
 const eventContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-await eventContext.addInitScript(() => {
-  const now = Date.now();
-  const state = {
-    schemaVersion: 1,
-    balanceVersion: 'visual-qa',
-    feathers: 250000,
-    branchLevels: { beak: 25, body: 20, nest: 15, wings: 10, swag: 10, brain: 10 },
-    mutationIds: [],
-    comboCharge: 0,
-    lastTapAt: 0,
-    saveRevision: 7,
-    lastSavedAt: now,
-    discoveredGrowthStages: [0, 1, 2, 3, 4],
-    appliedRewardIds: [],
-    events: { breadRushBestScore: 17, breadRushRuns: 2, breadRushCooldownSeconds: 0 },
-  };
-  localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(state));
-});
+await eventContext.addInitScript((seed) => {
+  localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
+}, baseState(growthFixtures[2].levels, ['business']));
 const eventPage = await eventContext.newPage();
 attachIssueListeners(eventPage, 'event');
 await eventPage.goto(baseURL, { waitUntil: 'networkidle' });
@@ -133,6 +171,12 @@ await mutationMobileContext.close();
 const screenshots = [
   'desktop-main.png',
   'mobile-main.png',
+  'desktop-growth-stage-4.png',
+  'desktop-growth-stage-5.png',
+  'desktop-growth-stage-6.png',
+  'desktop-growth-stage-7.png',
+  'desktop-growth-stage-8.png',
+  'mobile-growth-stage-6.png',
   'desktop-event-ready.png',
   'desktop-bread-rush.png',
   'desktop-mutation-choice.png',
@@ -145,6 +189,7 @@ const summary = {
   eventTimeRemaining: Number.isFinite(timeRemaining) ? timeRemaining : null,
   mutationCardCount,
   savedMutationIds,
+  growthCanvasHashes,
   screenshots,
 };
 writeFileSync(`${outputDir}/report.json`, JSON.stringify(summary, null, 2));
