@@ -6,7 +6,6 @@ import type { GameStore } from '../domain/game-store';
 import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
-const HERO_VISIBLE_SOURCE_BOTTOM = 0.94;
 const BREAD_TEXTURE = 'generated-bread-target';
 const BREAD_PATH = '/assets/generated/bread_target.png';
 
@@ -51,7 +50,6 @@ export class BreadRushScene extends Phaser.Scene {
     this.hero = this.add.image(0, 0, HERO_TEXTURE)
       .setOrigin(0.5)
       .setDepth(0);
-    this.hero.setCrop(0, 0, this.hero.width, this.hero.height * HERO_VISIBLE_SOURCE_BOTTOM);
     this.game.canvas.dataset.heroLayers = '1';
 
     this.scale.on('resize', this.onResize);
