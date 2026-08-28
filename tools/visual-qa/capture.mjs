@@ -18,16 +18,18 @@ function attachIssueListeners(page, label) {
 async function assertHeroContract(page, label) {
   await page.waitForFunction(() => {
     const canvas = document.querySelector('#game-canvas canvas');
-    return canvas?.dataset.heroCentered && canvas?.dataset.heroSafe;
+    return canvas?.dataset.heroCentered && canvas?.dataset.heroSafe && canvas?.dataset.heroLayers;
   }, { timeout: 8000 });
 
   const result = await page.locator('#game-canvas canvas').evaluate((canvas) => ({
     centered: canvas.dataset.heroCentered,
     safe: canvas.dataset.heroSafe,
+    layers: canvas.dataset.heroLayers,
   }));
 
   if (result.centered !== 'true') issues.push(`${label}: hero is not centered on the viewport`);
   if (result.safe !== 'true') issues.push(`${label}: hero overlaps a reserved UI zone`);
+  if (result.layers !== '1') issues.push(`${label}: meme pigeon is rendered more than once`);
 }
 
 async function openPage(viewport, label) {
