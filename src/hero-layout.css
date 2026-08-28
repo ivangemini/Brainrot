@@ -1,6 +1,10 @@
 /* Hero-first layout overrides.
    The meme pigeon owns the visual center. UI must route around it, never over it. */
 
+.scene-rail {
+  display: none;
+}
+
 @media (min-width: 861px) {
   /* Wide portals expose space around the portrait meme raster. Treat that space
      as intentional HUD matte instead of stretching/mirroring the production art. */
@@ -12,12 +16,90 @@
     pointer-events: none;
     background: linear-gradient(
       90deg,
-      rgba(7, 18, 22, 0.72) 0%,
-      rgba(7, 18, 22, 0.34) 14%,
+      rgba(7, 18, 22, 0.78) 0%,
+      rgba(7, 18, 22, 0.42) 14%,
       rgba(7, 18, 22, 0) 27%,
       rgba(7, 18, 22, 0) 73%,
       rgba(7, 18, 22, 0.24) 100%
     );
+  }
+
+  .scene-rail {
+    position: absolute;
+    z-index: 18;
+    top: 116px;
+    left: 18px;
+    display: block;
+    width: 220px;
+    padding: 14px;
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  .scene-rail__heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .scene-rail__heading img {
+    width: 50px;
+    height: 38px;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.28));
+  }
+
+  .scene-rail__heading > div {
+    min-width: 0;
+  }
+
+  .scene-rail__heading strong {
+    display: block;
+    margin-top: 2px;
+    color: var(--gold);
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+
+  .scene-rail p {
+    margin: 12px 0 8px;
+    color: var(--cream);
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .scene-rail__track {
+    overflow: hidden;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+  }
+
+  #bread-rush-rail-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--gold), #ff9c3a);
+    box-shadow: 0 0 14px rgba(242, 200, 75, 0.3);
+    transition: width 160ms linear;
+  }
+
+  .scene-rail__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 7px;
+    color: rgba(245, 241, 232, 0.7);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .scene-rail > small {
+    display: block;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
   }
 
   #game-ui::before {
@@ -67,6 +149,10 @@
 }
 
 @media (max-width: 900px) and (orientation: portrait) {
+  .scene-rail {
+    display: none;
+  }
+
   .upgrade-panel {
     max-height: min(26vh, 220px);
   }
