@@ -58,7 +58,7 @@ export function createBreadRushUi(root: HTMLElement): BreadRushUi {
       startHandler = undefined;
     },
     showActive: () => {
-      root.classList.add('event-mode');
+      root.classList.add('event-mode', 'bread-rush-mode');
       offer.hidden = true;
       resultShell.hidden = true;
       hud.hidden = false;
@@ -130,7 +130,7 @@ export function createBreadRushUi(root: HTMLElement): BreadRushUi {
       continueButton.addEventListener('click', onContinue, { once: true });
     },
     hideEvent: () => {
-      root.classList.remove('event-mode');
+      root.classList.remove('event-mode', 'bread-rush-mode');
       hud.hidden = true;
       resultShell.hidden = true;
       resultShell.replaceChildren();
