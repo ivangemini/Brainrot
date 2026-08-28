@@ -1,6 +1,7 @@
 import './styles.css';
 import './reward.css';
 import './bread-rush.css';
+import './mutation.css';
 import { GameStore } from './domain/game-store';
 import { BreadRushService, type BreadRushResult, type BreadRushRunContext } from './events/bread-rush-service';
 import { MonetizationService } from './monetization/monetization-service';
@@ -10,6 +11,7 @@ import { GameplayLifecycle } from './platform/gameplay-lifecycle';
 import { BreadRushScene } from './presentation/bread-rush-scene';
 import { createPhaserGame } from './presentation/create-phaser-game';
 import { createBreadRushUi } from './ui/bread-rush-ui';
+import { createMutationUi } from './ui/mutation-ui';
 import { createUiShell } from './ui/ui-shell';
 
 void bootstrap().catch((error) => {
@@ -49,6 +51,7 @@ async function bootstrap(): Promise<void> {
   game.scene.add('BreadRushScene', breadRushScene, false);
   const ui = createUiShell(uiHost, store);
   const breadRushUi = createBreadRushUi(uiHost);
+  const mutationUi = createMutationUi(uiHost);
 
   await sceneReady;
   await platform.signalReady();
@@ -80,6 +83,14 @@ async function bootstrap(): Promise<void> {
   let offerAccumulator = 0;
   let disposed = false;
   let frameRequest = 0;
+  let mutationOfferTimer = 0;
+  let mutationPauseActive = false;
+  let previousMutationEligible = store.isMutationEligible();
+
+  const resetSimulationClock = (): void => {
+    lastFrame = performance.now();
+    simulationAccumulator = 0;
+  };
 
   const continueFromBreadRush = (): void => {
     if (eventMode === 'idle') return;
@@ -89,8 +100,7 @@ async function bootstrap(): Promise<void> {
     breadRushUi.hideEvent();
     game.scene.stop('BreadRushScene');
     game.scene.wake('MainScene');
-    lastFrame = performance.now();
-    simulationAccumulator = 0;
+    resetSimulationClock();
     syncEventOffer();
   };
 
@@ -106,7 +116,7 @@ async function bootstrap(): Promise<void> {
   };
 
   const startBreadRush = (): void => {
-    if (eventMode !== 'idle') return;
+    if (eventMode !== 'idle' || store.isMutationEligible() || mutationUi.isVisible()) return;
     const context = breadRushService.startRun();
     if (!context) {
       syncEventOffer();
@@ -127,16 +137,68 @@ async function bootstrap(): Promise<void> {
       },
     });
     game.scene.start('BreadRushScene');
-    lastFrame = performance.now();
-    simulationAccumulator = 0;
+    resetSimulationClock();
   };
 
   function syncEventOffer(): void {
-    if (eventMode === 'idle' && breadRushService.isAvailable()) {
+    if (
+      eventMode === 'idle'
+      && !store.isMutationEligible()
+      && !mutationUi.isVisible()
+      && breadRushService.isAvailable()
+    ) {
       breadRushUi.showOffer(startBreadRush);
     } else {
       breadRushUi.hideOffer();
     }
+  }
+
+  const showMutationChoice = async (): Promise<void> => {
+    mutationOfferTimer = 0;
+    if (disposed || eventMode !== 'idle' || mutationUi.isVisible() || !store.isMutationEligible()) return;
+
+    breadRushUi.hideOffer();
+    mutationPauseActive = true;
+    await lifecycle.pause('mutation-choice');
+    mutationUi.showChoice({
+      onSelect: (mutationId) => {
+        const result = store.selectMutation(mutationId);
+        const accepted = result.applied
+          || (result.reason === 'already-selected' && result.mutationId === mutationId);
+        if (accepted) persist();
+        return accepted;
+      },
+      onResolved: async () => {
+        if (!mutationPauseActive) return;
+        mutationPauseActive = false;
+        await lifecycle.resume('mutation-choice');
+        resetSimulationClock();
+        syncEventOffer();
+      },
+    });
+  };
+
+  const scheduleMutationChoice = (delayMs: number): void => {
+    if (mutationOfferTimer || mutationUi.isVisible() || !store.isMutationEligible()) return;
+    breadRushUi.hideOffer();
+    mutationOfferTimer = window.setTimeout(() => void showMutationChoice(), delayMs);
+  };
+
+  const unsubscribeMutationWatcher = store.subscribe((state) => {
+    const eligible = store.isMutationEligible(state);
+    if (eligible && !previousMutationEligible) {
+      // Growth ceremony owns the first beat when level 150 is crossed.
+      scheduleMutationChoice(1350);
+    } else if (!eligible && mutationOfferTimer) {
+      window.clearTimeout(mutationOfferTimer);
+      mutationOfferTimer = 0;
+    }
+    previousMutationEligible = eligible;
+  });
+
+  if (previousMutationEligible) {
+    // A refresh on an unresolved choice returns to the decision safely.
+    scheduleMutationChoice(450);
   }
 
   syncEventOffer();
@@ -187,7 +249,7 @@ async function bootstrap(): Promise<void> {
       persist();
       void lifecycle.pause('visibility');
     } else {
-      lastFrame = performance.now();
+      resetSimulationClock();
       void lifecycle.resume('visibility');
     }
   };
@@ -199,9 +261,12 @@ async function bootstrap(): Promise<void> {
     import.meta.hot.dispose(() => {
       disposed = true;
       cancelAnimationFrame(frameRequest);
+      if (mutationOfferTimer) window.clearTimeout(mutationOfferTimer);
       window.removeEventListener('pagehide', onPageHide);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      unsubscribeMutationWatcher();
       persist();
+      mutationUi.destroy();
       breadRushUi.destroy();
       ui.destroy();
       game.destroy(true);
