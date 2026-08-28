@@ -49,6 +49,33 @@ describe('PigeonDropSession', () => {
     expect(session.getSnapshot().canDrop).toBe(true);
   });
 
+  it('freezes a moving target while the visible drop travels', () => {
+    const definition = makeDefinition({
+      countdownSeconds: 0,
+      durationSeconds: 3,
+      targetMinX: 0.4,
+      targetMaxX: 0.6,
+      targetSpeedPerSecond: 0.2,
+      dropTravelSeconds: 0.5,
+      attemptResetSeconds: 0.2,
+      centerAccuracy: 0.06,
+    });
+    const session = new PigeonDropSession(definition);
+
+    advance(session, 0.5);
+    const alignedX = session.getSnapshot().targetX;
+    expect(alignedX).toBeCloseTo(0.5, 8);
+    expect(session.drop().accepted).toBe(true);
+
+    advance(session, 0.25);
+    expect(session.getSnapshot().targetX).toBeCloseTo(alignedX, 8);
+    expect(session.getSnapshot().dropProgress).toBeCloseTo(0.5, 8);
+
+    advance(session, 0.25);
+    expect(session.getSnapshot().lastImpact?.targetX).toBeCloseTo(alignedX, 8);
+    expect(session.getSnapshot().lastImpact?.accuracy).toBe('center');
+  });
+
   it('records a miss without currency or score punishment beyond zero event points', () => {
     const definition = makeDefinition({
       countdownSeconds: 0,
