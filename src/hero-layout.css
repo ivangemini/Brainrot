@@ -52,7 +52,7 @@
     background: rgba(26, 27, 27, 0.72);
   }
 
-  .event-mode::before {
+  #game-ui.event-mode::before {
     content: "BREAD RUSH  •  CATCH THE BREAD  •  GOLD = 4";
     right: 12px;
     display: flex;
