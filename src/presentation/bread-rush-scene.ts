@@ -3,15 +3,9 @@ import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../domain/bread-rush';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
-import {
-  getHeroSafeRect,
-  getMemePigeonFocalPosition,
-  getMemePigeonScenePlacement,
-  rectContainsBounds,
-} from './hero-layout';
+import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
-const EVENT_BACKGROUND_TEXTURE = 'meme-pigeon-event-background';
 const BREAD_TEXTURE = 'generated-bread-target';
 const BREAD_PATH = '/assets/generated/bread_target.png';
 
@@ -25,7 +19,6 @@ export class BreadRushScene extends Phaser.Scene {
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
   private hero: Phaser.GameObjects.Image | undefined;
-  private background: Phaser.GameObjects.Image | undefined;
   private heroBaseScale = 1;
   private completedSignaled = false;
   private readonly onResize = (): void => this.layout();
@@ -43,7 +36,6 @@ export class BreadRushScene extends Phaser.Scene {
 
   public preload(): void {
     if (!this.textures.exists(HERO_TEXTURE)) this.load.image(HERO_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
-    if (!this.textures.exists(EVENT_BACKGROUND_TEXTURE)) this.load.image(EVENT_BACKGROUND_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
     this.load.image(BREAD_TEXTURE, BREAD_PATH);
   }
 
@@ -51,15 +43,14 @@ export class BreadRushScene extends Phaser.Scene {
     this.completedSignaled = false;
     this.targetSprites.clear();
     this.session = new BreadRushSession();
+    this.cameras.main.setBackgroundColor('#17382f');
 
-    this.background = this.add.image(0, 0, EVENT_BACKGROUND_TEXTURE)
-      .setOrigin(0.5)
-      .setTint(0x7f9794)
-      .setAlpha(0.74)
-      .setDepth(-20);
+    // Bread Rush keeps the same single hero layer as the main scene. Targets are
+    // live Phaser objects above it; there is no enlarged duplicate pigeon behind.
     this.hero = this.add.image(0, 0, HERO_TEXTURE)
       .setOrigin(0.5)
       .setDepth(0);
+    this.game.canvas.dataset.heroLayers = '1';
 
     this.scale.on('resize', this.onResize);
     this.events.once('shutdown', () => {
@@ -69,7 +60,6 @@ export class BreadRushScene extends Phaser.Scene {
       this.session = undefined;
       this.callbacks = undefined;
       this.hero = undefined;
-      this.background = undefined;
     });
     this.layout();
     this.callbacks?.onSnapshot(this.session.getSnapshot());
@@ -93,18 +83,6 @@ export class BreadRushScene extends Phaser.Scene {
     const height = this.scale.height;
     const centerX = width / 2;
     const centerY = height / 2;
-
-    if (this.background) {
-      const coverScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
-      const backgroundPosition = getMemePigeonFocalPosition(
-        width,
-        height,
-        this.background.width,
-        this.background.height,
-        coverScale,
-      );
-      this.background.setPosition(backgroundPosition.x, backgroundPosition.y).setScale(coverScale);
-    }
 
     if (this.hero) {
       const state = this.store.getSnapshot();
