@@ -1,15 +1,15 @@
 import { formatEconomyNumber } from '../domain/economy-formulas';
-import type { BreadRushSnapshot } from '../domain/bread-rush';
-import type { BreadRushResult } from '../events/bread-rush-service';
+import type { PigeonDropSnapshot } from '../domain/pigeon-drop';
+import type { PigeonDropResult } from '../events/pigeon-drop-service';
 import type { RewardDoubleResult } from '../monetization/monetization-service';
 
-export interface BreadRushUi {
+export interface PigeonDropUi {
   readonly showOffer: (onStart: () => void) => void;
   readonly hideOffer: () => void;
-  readonly showActive: () => void;
-  readonly updateActive: (snapshot: BreadRushSnapshot) => void;
+  readonly showActive: (onDrop: () => boolean) => void;
+  readonly updateActive: (snapshot: PigeonDropSnapshot) => void;
   readonly showResult: (
-    result: BreadRushResult,
+    result: PigeonDropResult,
     canDouble: boolean,
     onDouble: () => Promise<RewardDoubleResult>,
     onContinue: () => void,
@@ -18,35 +18,46 @@ export interface BreadRushUi {
   readonly destroy: () => void;
 }
 
-export function createBreadRushUi(root: HTMLElement): BreadRushUi {
+export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
   const host = document.createElement('div');
-  host.className = 'bread-rush-host';
+  host.className = 'pigeon-drop-host';
   host.innerHTML = `
-    <button type="button" class="bread-rush-offer glass-panel" hidden>
-      <img src="/assets/events/bread_normal.png" alt="" />
-      <span><small>EVENT READY</small><strong>BREAD RUSH</strong></span>
+    <button type="button" class="pigeon-drop-offer glass-panel" hidden>
+      <img src="/assets/generated/main_scene_hero.webp" alt="" />
+      <span><small>NEW EVENT READY</small><strong>PIGEON DROP</strong></span>
       <b>PLAY</b>
     </button>
-    <div class="bread-rush-hud" hidden>
-      <div class="bread-rush-score glass-panel"><small>SCORE</small><strong>0</strong></div>
-      <div class="bread-rush-title"><small>PIGEON EVENT</small><strong>BREAD RUSH</strong></div>
-      <div class="bread-rush-time glass-panel"><small>TIME</small><strong>30.0</strong></div>
-      <div class="bread-rush-countdown"></div>
+    <div class="pigeon-drop-hud" hidden>
+      <div class="pigeon-drop-score glass-panel"><small>SCORE</small><strong>0</strong></div>
+      <div class="pigeon-drop-title"><small>PIGEON EVENT</small><strong>PIGEON DROP</strong></div>
+      <div class="pigeon-drop-attempts glass-panel"><small>ATTEMPTS</small><strong>0</strong></div>
+      <div class="pigeon-drop-time glass-panel"><small>TIME</small><strong>30.0</strong></div>
+      <div class="pigeon-drop-countdown"></div>
+      <button type="button" class="pigeon-drop-action" disabled>
+        <span>LINE UP THE TARGET</span>
+        <b>DROP NOW</b>
+      </button>
+      <small class="pigeon-drop-tip">Perfect center hit = 5 points · tap anywhere or use the button</small>
     </div>
-    <div class="bread-rush-result-shell" hidden></div>
+    <div class="pigeon-drop-result-shell" hidden></div>
   `;
   root.append(host);
 
-  const offer = host.querySelector<HTMLButtonElement>('.bread-rush-offer')!;
-  const hud = host.querySelector<HTMLElement>('.bread-rush-hud')!;
-  const score = host.querySelector<HTMLElement>('.bread-rush-score strong')!;
-  const time = host.querySelector<HTMLElement>('.bread-rush-time strong')!;
-  const countdown = host.querySelector<HTMLElement>('.bread-rush-countdown')!;
-  const resultShell = host.querySelector<HTMLElement>('.bread-rush-result-shell')!;
+  const offer = host.querySelector<HTMLButtonElement>('.pigeon-drop-offer')!;
+  const hud = host.querySelector<HTMLElement>('.pigeon-drop-hud')!;
+  const score = host.querySelector<HTMLElement>('.pigeon-drop-score strong')!;
+  const attempts = host.querySelector<HTMLElement>('.pigeon-drop-attempts strong')!;
+  const time = host.querySelector<HTMLElement>('.pigeon-drop-time strong')!;
+  const countdown = host.querySelector<HTMLElement>('.pigeon-drop-countdown')!;
+  const action = host.querySelector<HTMLButtonElement>('.pigeon-drop-action')!;
+  const resultShell = host.querySelector<HTMLElement>('.pigeon-drop-result-shell')!;
   let startHandler: (() => void) | undefined;
+  let dropHandler: (() => boolean) | undefined;
 
   const clickOffer = (): void => startHandler?.();
+  const clickDrop = (): void => { dropHandler?.(); };
   offer.addEventListener('click', clickOffer);
+  action.addEventListener('click', clickDrop);
 
   return {
     showOffer: (onStart) => {
@@ -57,15 +68,28 @@ export function createBreadRushUi(root: HTMLElement): BreadRushUi {
       offer.hidden = true;
       startHandler = undefined;
     },
-    showActive: () => {
-      root.classList.add('event-mode', 'bread-rush-mode');
+    showActive: (onDrop) => {
+      root.classList.add('event-mode', 'pigeon-drop-mode');
+      dropHandler = onDrop;
       offer.hidden = true;
       resultShell.hidden = true;
       hud.hidden = false;
+      action.disabled = true;
     },
     updateActive: (snapshot) => {
       score.textContent = String(snapshot.score);
+      attempts.textContent = String(snapshot.attempts);
       time.textContent = snapshot.timeRemaining.toFixed(1);
+      action.disabled = !snapshot.canDrop;
+      action.classList.toggle('is-ready', snapshot.canDrop);
+      action.querySelector('span')!.textContent = snapshot.canDrop
+        ? 'TARGET MOVING · TIME THE HIT'
+        : snapshot.phase === 'countdown'
+          ? 'GET READY'
+          : snapshot.dropProgress !== null
+            ? 'DROP AWAY…'
+            : 'RESETTING…';
+
       if (snapshot.phase === 'countdown') {
         countdown.textContent = snapshot.countdownRemaining <= 0.12
           ? 'GO!'
@@ -79,31 +103,34 @@ export function createBreadRushUi(root: HTMLElement): BreadRushUi {
       hud.hidden = true;
       resultShell.hidden = false;
       resultShell.replaceChildren();
+      const accuracy = result.attempts > 0 ? result.score / result.attempts : 0;
       const card = document.createElement('section');
-      card.className = 'bread-rush-result glass-panel';
+      card.className = 'pigeon-drop-result glass-panel';
       card.innerHTML = `
         <span class="eyebrow">EVENT COMPLETE</span>
-        <h2>BREAD RUSH</h2>
-        <div class="bread-rush-result-grid">
+        <h2>PIGEON DROP</h2>
+        <div class="pigeon-drop-result-grid">
           <div><small>SCORE</small><strong>${result.score}</strong></div>
           <div><small>BEST</small><strong>${result.bestScore}</strong></div>
-          <div><small>REWARD</small><strong>+${formatEconomyNumber(result.baseReward)}</strong></div>
+          <div><small>ATTEMPTS</small><strong>${result.attempts}</strong></div>
+          <div><small>AVG PTS</small><strong>${accuracy.toFixed(1)}</strong></div>
+          <div class="reward"><small>REWARD</small><strong>+${formatEconomyNumber(result.baseReward)}</strong></div>
         </div>
         <p>${result.isNewBest ? 'NEW PERSONAL BEST · ' : ''}Base reward secured. Performance ×${result.performanceMultiplier.toFixed(2)}.</p>
-        <div class="bread-rush-result-actions">
+        <div class="pigeon-drop-result-actions">
           <button type="button" class="event-double" ${canDouble ? '' : 'disabled'}>
             <span>${canDouble ? 'WATCH AD' : 'NO AD'}</span>
             <b>${canDouble ? '2× REWARD' : 'BASE KEPT'}</b>
           </button>
           <button type="button" class="event-continue"><span>BACK TO CITY</span><b>CONTINUE</b></button>
         </div>
-        <small class="bread-rush-result-status">${canDouble ? `Watch an ad to add another +${formatEconomyNumber(result.baseReward)} Feathers.` : 'Rewarded ads are unavailable; nothing is lost.'}</small>
+        <small class="pigeon-drop-result-status">${canDouble ? `Watch an ad to add another +${formatEconomyNumber(result.baseReward)} Feathers.` : 'Rewarded ads are unavailable; nothing is lost.'}</small>
       `;
       resultShell.append(card);
 
       const doubleButton = card.querySelector<HTMLButtonElement>('.event-double')!;
       const continueButton = card.querySelector<HTMLButtonElement>('.event-continue')!;
-      const status = card.querySelector<HTMLElement>('.bread-rush-result-status')!;
+      const status = card.querySelector<HTMLElement>('.pigeon-drop-result-status')!;
 
       doubleButton.addEventListener('click', async () => {
         if (!canDouble || doubleButton.disabled) return;
@@ -130,14 +157,18 @@ export function createBreadRushUi(root: HTMLElement): BreadRushUi {
       continueButton.addEventListener('click', onContinue, { once: true });
     },
     hideEvent: () => {
-      root.classList.remove('event-mode', 'bread-rush-mode');
+      root.classList.remove('event-mode', 'pigeon-drop-mode');
       hud.hidden = true;
       resultShell.hidden = true;
       resultShell.replaceChildren();
       countdown.classList.remove('visible');
+      action.disabled = true;
+      action.classList.remove('is-ready');
+      dropHandler = undefined;
     },
     destroy: () => {
       offer.removeEventListener('click', clickOffer);
+      action.removeEventListener('click', clickDrop);
       host.remove();
     },
   };

@@ -1,90 +1,114 @@
-# Active Session — Growth Art Stages v1
+# Active Session — Pigeon Drop v1
 
 > Updated: 2026-08-28
-> Working branch: `codex/growth-art-stages-v1`
-> Task: Execute the next roadmap item after Mutation v1 — replace late-game Growth zoom/reframing with distinct generated-raster scale scenes at Total Lv 90/150/240/360/420 while preserving the approved hero fidelity and existing gameplay systems.
+> Working branch: `codex/pigeon-drop-v1`
+> Task: Complete the next roadmap item after Growth Art Stages v1 — add the second MVP Pigeon Event as a meaningful post-Mutation content beat, with deterministic gameplay, economy-scaled rewards, persistence, responsive presentation and browser QA.
 
 ## Completed
 
-- Kept the authoritative progression thresholds and mechanics unchanged. This pass is presentation/integration work, not a new progression system.
-- Added `src/content/growth-visual-content.ts` as the data-driven mapping between authoritative Growth stage IDs and runtime art state:
-  - stages 0–3 keep the established hero with mild reframe;
-  - Stage 4 / Total Lv 90 -> human-scale scene;
-  - Stage 5 / Total Lv 150 -> car-scale scene;
-  - Stage 6 / Total Lv 240 -> building-scale scene;
-  - Stage 7 / Total Lv 360 -> mega-city scale scene;
-  - Stage 8 / Total Lv 420 -> city-landmark scale scene.
-- Added stage-specific normalized tap hitboxes so interaction remains aligned as the visible pigeon footprint changes.
-- Added a deterministic raster compositor at `tools/art/generate-growth-stage-assets.mjs` and wired it into `npm run art:generate` before event/mutation generation.
-- Added `sharp` as the build-time raster compositor dependency.
-- Preserved the approved `main_scene_hero.webp` as the material/detail source for all major Growth scenes:
-  - soft raster pigeon extraction from the approved hero;
-  - preserved feather, neck-iridescence, chain, beak and sunglasses detail;
-  - progressively recomposed scene footprint;
-  - flattened human/car/building/skyline/city scale-reference layers;
-  - no SVG/runtime vector fallback.
-- Rejected an earlier low-fidelity giant-pigeon redraw after manual browser screenshot review, despite its green automated checks. It was replaced before merge with the high-fidelity hero-source compositor.
-- MainScene now preloads the unique Growth textures and switches them from authoritative Growth state.
-- Scene-changing Growth transitions crossfade previous -> next raster state, then run controlled flash/shake plus the canonical stage name/subtitle.
-- Initial load of an existing late-game save immediately uses the correct stage art without replaying an old Growth ceremony.
-- Stage 4+ Mutation treatments are progressively attenuated so build identity remains visible but cannot cover the Growth scene payoff.
-- Bread Rush now inherits both the player's current Growth scene and selected Mutation treatment instead of reverting to the original park hero.
-- Added deterministic Growth visual tests covering:
-  - every authoritative stage ID;
-  - exact 90/150/240/360/420 mapping;
-  - unique major raster paths;
-  - no SVG paths;
-  - preload de-duplication;
-  - normalized stage hitboxes;
-  - Mutation scale/opacity policy;
-  - safe unknown-stage fallback.
-- Expanded browser Visual QA:
-  - desktop Stage 4/5/6/7/8 screenshots;
-  - mobile Stage 6 screenshot;
-  - SHA-256 hash assertion that all five major Phaser canvas renders are distinct;
-  - Bread Rush tested at Stage 6 with Business Mutation active;
-  - existing desktop/mobile main and Mutation choice/persistence checks remain covered.
-- Added `design/art/growth-stage-scenes.md` documenting the implemented scene matrix, fidelity pipeline, transition contract and QA requirements.
+- Preserved the existing clicker, Growth, Mutation, Bread Rush, save/offline and monetization systems.
+- Implemented **Pigeon Drop** as the second MVP Pigeon Event:
+  - unlock at Total Upgrade Level 180, after first Mutation at 150 and before Growth Stage 6 at 240;
+  - 3-second countdown + 30-second active run;
+  - one primary pointer/touch action;
+  - target position locks when a drop is accepted so click timing remains authoritative during the fixed 0.48-second visible flight;
+  - deterministic center / near / graze / miss scoring at impact;
+  - short attempt reset and no Feather penalty on misses.
+- Added `src/domain/pigeon-drop.ts` as a deterministic, frame-rate-independent session model driven only by active gameplay time.
+- Added `src/domain/event-economy.ts` and moved both Bread Rush and Pigeon Drop onto the same mutation-aware reference-income / bounded reward pipeline.
+- Added `PigeonDropService` using the existing idempotent reward ledger:
+  - base result reward is applied once and persisted before optional rewarded doubling;
+  - repeated completion callbacks cannot duplicate reward, run count or cooldown state;
+  - rewarded bonus has a separate transaction ID;
+  - Chaos event multiplier remains authoritative and applies to both events.
+- Extended additive schema-v1 event progress with:
+  - Pigeon Drop best score / runs / cooldown;
+  - shared Pigeon Event cooldown;
+  - last completed event ID.
+- Old schema-v1 saves containing only Bread Rush event fields load with safe default Pigeon Drop/shared fields; no save reset or schema bump is required.
+- Added deterministic event opportunity selection in `src/events/event-availability.ts`:
+  - shared 5-minute anti-clumping cooldown after either event;
+  - Bread Rush own cooldown remains 6 minutes;
+  - Pigeon Drop own cooldown is 7 minutes;
+  - when both are ready, offer the event opposite `lastEventId`;
+  - with no event history after Lv 180, surface Pigeon Drop first.
+- Integrated the two-event coordinator in `src/main.ts`:
+  - only one event can own the runtime event slot;
+  - normal clicker production remains paused during active event play;
+  - event offers stay suppressed during unresolved Mutation choice;
+  - return from either event safely wakes MainScene and resets simulation timing.
+- Added responsive Pigeon Drop UI and Phaser presentation:
+  - current generated Growth raster environment and Mutation treatment remain the production-art layer;
+  - large `DROP NOW` action plus playfield tap input;
+  - score / attempts / time HUD;
+  - moving bullseye, aim guide, falling marker, impact burst and score text are transient Phaser interaction/VFX primitives only;
+  - result card with score, best, attempts, average points, secured reward and optional rewarded ×2.
+- Removed the obsolete shape-generated Pigeon Drop target/projectile/impact texture pipeline:
+  - deleted `tools/art/generate-pigeon-drop-assets.mjs`;
+  - removed it from `npm run art:generate`;
+  - removed the Pigeon Drop offer's dependency on its generated target PNG and reused the existing raster hero asset instead;
+  - production raster-only/no-SVG guard remains unchanged.
+- Added tests for:
+  - deterministic center hit and miss resolution;
+  - target-lock / flight / reset timing and completion;
+  - reward bounds and economy scaling;
+  - Business/Mutation-aware reference income;
+  - base reward idempotency;
+  - event alternation and shared/per-event cooldown semantics;
+  - schema-v1 two-event round trip and old Bread Rush-only save migration;
+  - malformed event progress sanitization.
+- Expanded browser Visual QA so Bread Rush and Pigeon Drop are seeded independently instead of relying on whichever offer the rotation chooses.
+- Pigeon Drop browser QA covers:
+  - desktop ready state;
+  - desktop active state and a resolved live attempt;
+  - full 30-second result flow;
+  - localStorage assertion for exactly one run increment, `lastEventId`, shared cooldown and base reward transaction;
+  - compact 390x844 portrait active state;
+  - existing Growth, Bread Rush and Mutation regression captures remain in the same workflow.
+- Updated `design/gdd/pigeon-events.md` to implemented v0.2 with shipped tuning, click-authoritative target lock, transient-VFX art policy, shared event economy, rotation/cooldown contract and save/reward safety.
 
 ## Verification Evidence
 
-Final gameplay/art code SHA `f51c534f782b4b7e5f0c3e8bd1fb9ac764abfd8b`:
+Final gameplay/art presentation HEAD before housekeeping: `34a38462d511ac5cf906415c03a0e846da9c55d1`.
 
-- CI run `33146031848`: PASS.
-  - `sharp` raster compositor install: PASS;
-  - all Growth raster scenes generated: PASS;
-  - raster-only / no-SVG gate: PASS;
-  - Mutation balance identity guard: PASS;
-  - Vitest including Growth visual mapping/opacity coverage: PASS;
+- CI run `33147842237`: PASS.
+  - generated raster art pipeline: PASS;
+  - raster-only / no-SVG production-art gate: PASS;
+  - Mutation balance profile guard: PASS;
+  - Vitest including Pigeon Drop/event rotation/save migration coverage: PASS;
   - strict TypeScript + Vite production build: PASS.
-- Browser Visual QA run `33146031793`: PASS.
-  - desktop Growth Stage 4/5/6/7/8: captured;
-  - five major canvas hashes all distinct: PASS;
-  - mobile Growth Stage 6: captured;
-  - Bread Rush Stage 6 + Business Mutation: captured and clock assertion PASS;
-  - desktop/mobile Mutation choice regression coverage: PASS;
-  - Business Mutation persistence: PASS;
-  - console/page errors: none reported by the QA script.
-- Manual screenshot review: PASS after one required revision.
-  - first generated giant-pigeon pass was rejected for lower fidelity than the approved hero;
-  - final pass preserves detailed feather/material rendering while making scale readable through human -> car -> building -> skyline -> city references;
-  - late-stage Business treatment opacity was reduced after screenshot review so it no longer masks the Growth art;
-  - compact mobile Stage 6 remains readable and the Growth scale reference survives the portrait crop.
+- Browser Visual QA run `33147838985`: PASS.
+  - production build / preview: PASS;
+  - Bread Rush regression clock path: PASS;
+  - Pigeon Drop desktop offer -> active -> resolved attempt -> result: PASS;
+  - Pigeon Drop result persistence assertions: PASS;
+  - Pigeon Drop compact portrait capture: PASS;
+  - Growth Stage 4–8 render uniqueness regression: PASS;
+  - Mutation desktop/mobile regression and persistence: PASS.
+- Manual review of the `34a3846...` Visual QA artifact: PASS.
+  - transient precision marker reads more cleanly than the discarded shape-generated target texture;
+  - desktop and portrait layouts keep target, fixed aim lane and action hierarchy legible;
+  - production Growth/Mutation raster identity remains intact behind the event VFX;
+  - HUD label correctly says `ATTEMPTS`.
+
+Final housekeeping removes the obsolete generator/build dependency and stale offer-image dependency. PR #4 may merge only after the resulting branch head passes CI and Visual QA.
 
 ## Current Runtime Status
 
-- Roadmap item 1 after Mutation v1 is complete: late Growth progression now changes actual runtime art/environment instead of primarily changing camera framing.
-- Total Lv 90, 150, 240, 360 and 420 each have distinct generated-raster runtime scenes.
-- The approved hero identity/material quality is retained across the sequence.
-- Growth art remains composable with Mutation state and Bread Rush.
-- The overall game is still not release-complete; post-Mutation content depth is now the next roadmap bottleneck rather than late Growth visual differentiation.
+- The roadmap's post-Mutation content/event-depth bottleneck is closed for the current MVP scope.
+- Both designed MVP Pigeon Events are implemented: Bread Rush and Pigeon Drop.
+- Pigeon Drop creates a distinct skill/timing beat after the first Mutation instead of letting the post-150 loop collapse back into upgrade purchasing only.
+- Both events share authoritative economy/reward semantics, use safe persisted result transactions, and cannot clump or overlap.
+- Growth and Mutation identity carry through event presentation instead of events reverting the player to an early-game visual state.
+- Pigeon Drop no longer depends on a shape-generated production texture pack; its precision marker and impact feedback are transient runtime VFX.
+- The project is still not release-complete; the next roadmap bottleneck is presentation polish rather than missing MVP event count.
 
 ## Next
 
-1. Add the next meaningful content/event beat after Mutation so the post-150 loop does not collapse back into only upgrade purchasing.
-2. Add audio and stronger game-feel layering for Growth, Mutation, crits and Bread Rush.
-3. Continue portal/mobile QA and release-readiness work after the post-Mutation content pass.
+1. Add **audio and stronger game-feel layering** for normal taps, combo tiers, crits, Growth ceremonies, Mutation selection/reveal, Bread Rush and Pigeon Drop.
+2. After audio/game-feel, continue portal/mobile/release-readiness QA and close remaining commercial-MVP polish issues.
+3. Do not add unrelated progression trees, currencies or new game modes before those roadmap items are complete.
 
 ## Blockers
 
-None for continued development. Growth Art Stages v1 is implemented and verified; continue with the next roadmap item, post-Mutation content/event depth.
+None for continued development. Pigeon Drop v1 and the two-event MVP set are implemented; housekeeping changes are complete and awaiting final branch-head verification/merge.

@@ -1,12 +1,7 @@
 import { BREAD_RUSH, type BreadRushDefinition } from '../content/event-content';
 import type { MutationId } from '../content/mutation-content';
-import {
-  getCritChance,
-  getCritMultiplier,
-  getPassiveRate,
-  getTapPayout,
-  type BranchLevels,
-} from './economy-formulas';
+import type { BranchLevels } from './economy-formulas';
+import { getEventReferenceIncome, getEventReward, type EventRewardBreakdown } from './event-economy';
 
 export type BreadKind = 'normal' | 'golden';
 export type BreadRushPhase = 'countdown' | 'active' | 'complete';
@@ -36,12 +31,7 @@ export interface BreadCollectResult {
   readonly kind?: BreadKind;
 }
 
-export interface BreadRushRewardBreakdown {
-  readonly normalizedScore: number;
-  readonly performanceMultiplier: number;
-  readonly referenceIncomePerSecond: number;
-  readonly reward: number;
-}
+export type BreadRushRewardBreakdown = EventRewardBreakdown;
 
 export class BreadRushSession {
   private phase: BreadRushPhase = 'countdown';
@@ -162,11 +152,7 @@ export function getBreadRushReferenceIncome(
   levels: BranchLevels,
   mutations: readonly MutationId[] = [],
 ): number {
-  const expectedCritFactor = 1 + getCritChance(levels, mutations) * (getCritMultiplier(levels, mutations) - 1);
-  const tapReference = getTapPayout(levels, BREAD_RUSH.referenceComboMultiplier, false, mutations)
-    * BREAD_RUSH.referenceTapsPerSecond
-    * expectedCritFactor;
-  return Math.max(1, tapReference + getPassiveRate(levels, mutations));
+  return getEventReferenceIncome(levels, mutations, BREAD_RUSH);
 }
 
 export function getBreadRushReward(
@@ -174,18 +160,5 @@ export function getBreadRushReward(
   referenceIncomePerSecond: number,
   definition: BreadRushDefinition = BREAD_RUSH,
 ): BreadRushRewardBreakdown {
-  const safeScore = Math.max(0, Number.isFinite(score) ? score : 0);
-  const normalizedScore = Math.min(definition.normalizedScoreCap, safeScore / definition.expectedScore);
-  const performanceMultiplier = Math.min(
-    definition.performanceMax,
-    definition.performanceBase + normalizedScore * definition.performancePerNormalizedScore,
-  );
-  const safeReference = Math.max(1, Number.isFinite(referenceIncomePerSecond) ? referenceIncomePerSecond : 1);
-  const reward = safeReference * definition.baseRewardSeconds * performanceMultiplier;
-  return {
-    normalizedScore,
-    performanceMultiplier,
-    referenceIncomePerSecond: safeReference,
-    reward,
-  };
+  return getEventReward(score, referenceIncomePerSecond, definition);
 }

@@ -43,8 +43,21 @@ function baseState(branchLevels, mutationIds = []) {
     lastSavedAt: Date.now(),
     discoveredGrowthStages,
     appliedRewardIds: [],
-    events: { breadRushBestScore: 17, breadRushRuns: 2, breadRushCooldownSeconds: 0 },
+    events: {
+      breadRushBestScore: 17,
+      breadRushRuns: 2,
+      breadRushCooldownSeconds: 0,
+      pigeonDropBestScore: 12,
+      pigeonDropRuns: 1,
+      pigeonDropCooldownSeconds: 0,
+      sharedCooldownSeconds: 0,
+      lastEventId: null,
+    },
   };
+}
+
+function withEventOverrides(state, overrides) {
+  return { ...state, events: { ...state.events, ...overrides } };
 }
 
 function mutationSeed() {
@@ -102,30 +115,109 @@ await growthMobilePage.screenshot({ path: `${outputDir}/mobile-growth-stage-6.pn
 await growthMobilePage.close();
 await growthMobileContext.close();
 
-const eventContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-await eventContext.addInitScript((seed) => {
+// Bread Rush regression: force Pigeon Drop onto cooldown so this path is deterministic.
+const breadEventContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+await breadEventContext.addInitScript((seed) => {
   localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
-}, baseState(growthFixtures[2].levels, ['business']));
-const eventPage = await eventContext.newPage();
-attachIssueListeners(eventPage, 'event');
-await eventPage.goto(baseURL, { waitUntil: 'networkidle' });
-await eventPage.waitForSelector('#game-canvas canvas', { state: 'visible' });
-await eventPage.waitForSelector('.bread-rush-offer:not([hidden])', { timeout: 8000 });
-await eventPage.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullPage: true });
-await eventPage.click('.bread-rush-offer');
-await eventPage.waitForSelector('.bread-rush-hud:not([hidden])');
-await eventPage.waitForTimeout(3600);
+}, withEventOverrides(baseState(growthFixtures[2].levels, ['business']), {
+  pigeonDropCooldownSeconds: 999,
+  lastEventId: 'pigeon-drop',
+}));
+const breadEventPage = await breadEventContext.newPage();
+attachIssueListeners(breadEventPage, 'bread-event');
+await breadEventPage.goto(baseURL, { waitUntil: 'networkidle' });
+await breadEventPage.waitForSelector('#game-canvas canvas', { state: 'visible' });
+await breadEventPage.waitForSelector('.bread-rush-offer:not([hidden])', { timeout: 8000 });
+await breadEventPage.screenshot({ path: `${outputDir}/desktop-event-ready.png`, fullPage: true });
+await breadEventPage.click('.bread-rush-offer');
+await breadEventPage.waitForSelector('.bread-rush-hud:not([hidden])');
+await breadEventPage.waitForTimeout(3600);
 
-const timeText = await eventPage.locator('.bread-rush-time strong').textContent();
-const timeRemaining = Number(timeText);
-const countdownVisible = await eventPage.locator('.bread-rush-countdown').evaluate((element) => element.classList.contains('visible'));
-if (!Number.isFinite(timeRemaining) || timeRemaining >= 29.8 || countdownVisible) {
-  issues.push(`event: Bread Rush clock did not advance correctly (time=${timeText}, countdownVisible=${countdownVisible})`);
+const breadTimeText = await breadEventPage.locator('.bread-rush-time strong').textContent();
+const breadTimeRemaining = Number(breadTimeText);
+const breadCountdownVisible = await breadEventPage.locator('.bread-rush-countdown').evaluate((element) => element.classList.contains('visible'));
+if (!Number.isFinite(breadTimeRemaining) || breadTimeRemaining >= 29.8 || breadCountdownVisible) {
+  issues.push(`bread-event: Bread Rush clock did not advance correctly (time=${breadTimeText}, countdownVisible=${breadCountdownVisible})`);
 }
 
-await eventPage.screenshot({ path: `${outputDir}/desktop-bread-rush.png`, fullPage: true });
-await eventPage.close();
-await eventContext.close();
+await breadEventPage.screenshot({ path: `${outputDir}/desktop-bread-rush.png`, fullPage: true });
+await breadEventPage.close();
+await breadEventContext.close();
+
+// Pigeon Drop desktop: force Bread Rush onto cooldown and exercise a live drop plus result persistence.
+const pigeonDropContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const pigeonDropSeed = withEventOverrides(baseState(growthFixtures[2].levels, ['business']), {
+  breadRushCooldownSeconds: 999,
+  lastEventId: 'bread-rush',
+});
+await pigeonDropContext.addInitScript((seed) => {
+  localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
+}, pigeonDropSeed);
+const pigeonDropPage = await pigeonDropContext.newPage();
+attachIssueListeners(pigeonDropPage, 'pigeon-drop-desktop');
+await pigeonDropPage.goto(baseURL, { waitUntil: 'networkidle' });
+await pigeonDropPage.waitForSelector('#game-canvas canvas', { state: 'visible' });
+await pigeonDropPage.waitForSelector('.pigeon-drop-offer:not([hidden])', { timeout: 8000 });
+await pigeonDropPage.screenshot({ path: `${outputDir}/desktop-pigeon-drop-ready.png`, fullPage: true });
+await pigeonDropPage.click('.pigeon-drop-offer');
+await pigeonDropPage.waitForSelector('.pigeon-drop-hud:not([hidden])');
+await pigeonDropPage.waitForSelector('.pigeon-drop-action:not([disabled])', { timeout: 6000 });
+
+const pigeonDropTimeText = await pigeonDropPage.locator('.pigeon-drop-time strong').textContent();
+const pigeonDropTimeRemaining = Number(pigeonDropTimeText);
+if (!Number.isFinite(pigeonDropTimeRemaining) || pigeonDropTimeRemaining >= 29.9) {
+  issues.push(`pigeon-drop-desktop: event clock did not enter active time (time=${pigeonDropTimeText})`);
+}
+
+await pigeonDropPage.click('.pigeon-drop-action');
+await pigeonDropPage.waitForTimeout(540);
+const pigeonDropAttempts = Number(await pigeonDropPage.locator('.pigeon-drop-attempts strong').textContent());
+if (!Number.isFinite(pigeonDropAttempts) || pigeonDropAttempts < 1) {
+  issues.push(`pigeon-drop-desktop: a live drop did not resolve an attempt (${pigeonDropAttempts})`);
+}
+await pigeonDropPage.screenshot({ path: `${outputDir}/desktop-pigeon-drop-active.png`, fullPage: true });
+
+await pigeonDropPage.waitForSelector('.pigeon-drop-result-shell:not([hidden])', { timeout: 35000 });
+const persistedPigeonDropState = await pigeonDropPage.evaluate(() => {
+  const raw = localStorage.getItem('pigeon-maxxing:save:v1');
+  if (!raw) return null;
+  const parsed = JSON.parse(raw);
+  return {
+    events: parsed.events,
+    appliedRewardIds: parsed.appliedRewardIds,
+  };
+});
+if (
+  !persistedPigeonDropState
+  || persistedPigeonDropState.events?.pigeonDropRuns !== pigeonDropSeed.events.pigeonDropRuns + 1
+  || persistedPigeonDropState.events?.lastEventId !== 'pigeon-drop'
+  || !(persistedPigeonDropState.events?.sharedCooldownSeconds > 0)
+  || !Array.isArray(persistedPigeonDropState.appliedRewardIds)
+  || !persistedPigeonDropState.appliedRewardIds.some((id) => typeof id === 'string' && id.startsWith('event:pigeon-drop:') && id.endsWith(':base'))
+) {
+  issues.push(`pigeon-drop-desktop: result did not persist exactly once (${JSON.stringify(persistedPigeonDropState)})`);
+}
+await pigeonDropPage.screenshot({ path: `${outputDir}/desktop-pigeon-drop-result.png`, fullPage: true });
+await pigeonDropPage.close();
+await pigeonDropContext.close();
+
+// Compact portrait Pigeon Drop layout.
+const pigeonDropMobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await pigeonDropMobileContext.addInitScript((seed) => {
+  localStorage.setItem('pigeon-maxxing:save:v1', JSON.stringify(seed));
+}, withEventOverrides(baseState(growthFixtures[2].levels, ['business']), {
+  breadRushCooldownSeconds: 999,
+  lastEventId: 'bread-rush',
+}));
+const pigeonDropMobilePage = await pigeonDropMobileContext.newPage();
+attachIssueListeners(pigeonDropMobilePage, 'pigeon-drop-mobile');
+await pigeonDropMobilePage.goto(baseURL, { waitUntil: 'networkidle' });
+await pigeonDropMobilePage.waitForSelector('.pigeon-drop-offer:not([hidden])', { timeout: 8000 });
+await pigeonDropMobilePage.click('.pigeon-drop-offer');
+await pigeonDropMobilePage.waitForSelector('.pigeon-drop-action:not([disabled])', { timeout: 6000 });
+await pigeonDropMobilePage.screenshot({ path: `${outputDir}/mobile-pigeon-drop-active.png`, fullPage: true });
+await pigeonDropMobilePage.close();
+await pigeonDropMobileContext.close();
 
 const mutationContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 await mutationContext.addInitScript((seed) => {
@@ -179,6 +271,10 @@ const screenshots = [
   'mobile-growth-stage-6.png',
   'desktop-event-ready.png',
   'desktop-bread-rush.png',
+  'desktop-pigeon-drop-ready.png',
+  'desktop-pigeon-drop-active.png',
+  'desktop-pigeon-drop-result.png',
+  'mobile-pigeon-drop-active.png',
   'desktop-mutation-choice.png',
   'desktop-business-mutation.png',
   'mobile-mutation-choice.png',
@@ -186,7 +282,10 @@ const screenshots = [
 const summary = {
   url: baseURL,
   issues,
-  eventTimeRemaining: Number.isFinite(timeRemaining) ? timeRemaining : null,
+  breadRushTimeRemaining: Number.isFinite(breadTimeRemaining) ? breadTimeRemaining : null,
+  pigeonDropTimeRemaining: Number.isFinite(pigeonDropTimeRemaining) ? pigeonDropTimeRemaining : null,
+  pigeonDropAttempts,
+  persistedPigeonDropState,
   mutationCardCount,
   savedMutationIds,
   growthCanvasHashes,

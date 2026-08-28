@@ -1,18 +1,19 @@
-import { getBreadRushReferenceIncome, getBreadRushReward } from '../domain/bread-rush';
 import { getEventRewardMultiplier } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
+import { getPigeonDropReferenceIncome, getPigeonDropReward } from '../domain/pigeon-drop';
 import type { MonetizationService, RewardDoubleResult } from '../monetization/monetization-service';
 
-export interface BreadRushRunContext {
+export interface PigeonDropRunContext {
   readonly runId: string;
   readonly referenceIncomePerSecond: number;
   readonly previousBest: number;
 }
 
-export interface BreadRushResult {
+export interface PigeonDropResult {
   readonly runId: string;
   readonly score: number;
+  readonly attempts: number;
   readonly baseReward: number;
   readonly performanceMultiplier: number;
   readonly previousBest: number;
@@ -21,7 +22,7 @@ export interface BreadRushResult {
   readonly doubleTransactionId: string;
 }
 
-export class BreadRushService {
+export class PigeonDropService {
   public constructor(
     private readonly store: GameStore,
     private readonly monetization: MonetizationService,
@@ -29,29 +30,30 @@ export class BreadRushService {
   ) {}
 
   public isAvailable(state: Readonly<GameState> = this.store.getSnapshot()): boolean {
-    return this.store.isBreadRushAvailable(state);
+    return this.store.isPigeonDropAvailable(state);
   }
 
-  public startRun(runId = createRunId()): BreadRushRunContext | null {
+  public startRun(runId = createRunId()): PigeonDropRunContext | null {
     const state = this.store.getSnapshot();
     if (!this.isAvailable(state)) return null;
     return {
       runId,
-      referenceIncomePerSecond: getBreadRushReferenceIncome(state.branchLevels, state.mutationIds),
-      previousBest: state.events.breadRushBestScore,
+      referenceIncomePerSecond: getPigeonDropReferenceIncome(state.branchLevels, state.mutationIds),
+      previousBest: state.events.pigeonDropBestScore,
     };
   }
 
-  public finishRun(context: BreadRushRunContext, score: number): BreadRushResult {
-    const breakdown = getBreadRushReward(score, context.referenceIncomePerSecond);
+  public finishRun(context: PigeonDropRunContext, score: number, attempts: number): PigeonDropResult {
+    const breakdown = getPigeonDropReward(score, context.referenceIncomePerSecond);
     const state = this.store.getSnapshot();
     const eventReward = breakdown.reward * getEventRewardMultiplier(state.mutationIds);
     const safeScore = Math.max(0, Math.floor(Number.isFinite(score) ? score : 0));
-    const baseTransactionId = `event:bread-rush:${context.runId}:base`;
+    const safeAttempts = Math.max(0, Math.floor(Number.isFinite(attempts) ? attempts : 0));
+    const baseTransactionId = `event:pigeon-drop:${context.runId}:base`;
     const baseApply = this.store.applyRewardOnce(baseTransactionId, eventReward);
 
     if (baseApply.applied) {
-      this.store.recordBreadRushCompletion(safeScore);
+      this.store.recordPigeonDropCompletion(safeScore);
       this.persistImmediately();
     }
 
@@ -59,25 +61,26 @@ export class BreadRushService {
     return {
       runId: context.runId,
       score: safeScore,
+      attempts: safeAttempts,
       baseReward: eventReward,
       performanceMultiplier: breakdown.performanceMultiplier,
       previousBest: context.previousBest,
       bestScore,
       isNewBest: safeScore > context.previousBest,
-      doubleTransactionId: `event:bread-rush:${context.runId}:double`,
+      doubleTransactionId: `event:pigeon-drop:${context.runId}:double`,
     };
   }
 
-  public canDouble(result: BreadRushResult): boolean {
+  public canDouble(result: PigeonDropResult): boolean {
     return this.monetization.canShowRewarded()
       && !this.store.hasAppliedReward(result.doubleTransactionId);
   }
 
-  public async doubleResult(result: BreadRushResult): Promise<RewardDoubleResult> {
+  public async doubleResult(result: PigeonDropResult): Promise<RewardDoubleResult> {
     return this.monetization.doubleFeatherReward(
       result.doubleTransactionId,
       result.baseReward,
-      'bread-rush-result-double',
+      'pigeon-drop-result-double',
     );
   }
 }

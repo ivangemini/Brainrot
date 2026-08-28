@@ -1,4 +1,5 @@
 import { BALANCE_VERSION, type UpgradeBranchId } from '../content/economy-content';
+import type { PigeonEventId } from '../content/event-content';
 import type { MutationId } from '../content/mutation-content';
 import { createEmptyBranchLevels, type BranchLevels } from './economy-formulas';
 
@@ -6,6 +7,11 @@ export interface EventProgressState {
   breadRushBestScore: number;
   breadRushRuns: number;
   breadRushCooldownSeconds: number;
+  pigeonDropBestScore: number;
+  pigeonDropRuns: number;
+  pigeonDropCooldownSeconds: number;
+  sharedCooldownSeconds: number;
+  lastEventId: PigeonEventId | null;
 }
 
 export interface GameState {
@@ -40,6 +46,11 @@ export function createNewGameState(now = Date.now()): GameState {
       breadRushBestScore: 0,
       breadRushRuns: 0,
       breadRushCooldownSeconds: 0,
+      pigeonDropBestScore: 0,
+      pigeonDropRuns: 0,
+      pigeonDropCooldownSeconds: 0,
+      sharedCooldownSeconds: 0,
+      lastEventId: null,
     },
   };
 }

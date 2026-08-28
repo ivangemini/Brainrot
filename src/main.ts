@@ -1,17 +1,23 @@
 import './styles.css';
 import './reward.css';
 import './bread-rush.css';
+import './pigeon-drop.css';
 import './mutation.css';
+import type { PigeonEventId } from './content/event-content';
 import { GameStore } from './domain/game-store';
 import { BreadRushService, type BreadRushResult, type BreadRushRunContext } from './events/bread-rush-service';
+import { selectEventOffer } from './events/event-availability';
+import { PigeonDropService, type PigeonDropResult, type PigeonDropRunContext } from './events/pigeon-drop-service';
 import { MonetizationService } from './monetization/monetization-service';
 import { loadGame, saveGame } from './persistence/save-service';
 import { createPlatformAdapter } from './platform/create-platform-adapter';
 import { GameplayLifecycle } from './platform/gameplay-lifecycle';
 import { BreadRushScene } from './presentation/bread-rush-scene';
 import { createPhaserGame } from './presentation/create-phaser-game';
+import { PigeonDropScene } from './presentation/pigeon-drop-scene';
 import { createBreadRushUi } from './ui/bread-rush-ui';
 import { createMutationUi } from './ui/mutation-ui';
+import { createPigeonDropUi } from './ui/pigeon-drop-ui';
 import { createUiShell } from './ui/ui-shell';
 
 void bootstrap().catch((error) => {
@@ -40,6 +46,7 @@ async function bootstrap(): Promise<void> {
   };
   const monetization = new MonetizationService(platform, lifecycle, store, persist);
   const breadRushService = new BreadRushService(store, monetization, persist);
+  const pigeonDropService = new PigeonDropService(store, monetization, persist);
 
   let resolveSceneReady!: () => void;
   const sceneReady = new Promise<void>((resolve) => {
@@ -48,9 +55,12 @@ async function bootstrap(): Promise<void> {
 
   const game = createPhaserGame('game-canvas', store, resolveSceneReady);
   const breadRushScene = new BreadRushScene(store, () => lifecycle.isActive);
+  const pigeonDropScene = new PigeonDropScene(store, () => lifecycle.isActive);
   game.scene.add('BreadRushScene', breadRushScene, false);
+  game.scene.add('PigeonDropScene', pigeonDropScene, false);
   const ui = createUiShell(uiHost, store);
   const breadRushUi = createBreadRushUi(uiHost);
+  const pigeonDropUi = createPigeonDropUi(uiHost);
   const mutationUi = createMutationUi(uiHost);
 
   await sceneReady;
@@ -75,8 +85,9 @@ async function bootstrap(): Promise<void> {
   });
 
   let eventMode: 'idle' | 'active' | 'result' = 'idle';
-  let activeRun: BreadRushRunContext | null = null;
-  let activeResult: BreadRushResult | null = null;
+  let activeEventId: PigeonEventId | null = null;
+  let breadRushRun: BreadRushRunContext | null = null;
+  let pigeonDropRun: PigeonDropRunContext | null = null;
   let lastFrame = performance.now();
   let simulationAccumulator = 0;
   let saveAccumulator = 0;
@@ -92,26 +103,46 @@ async function bootstrap(): Promise<void> {
     simulationAccumulator = 0;
   };
 
-  const continueFromBreadRush = (): void => {
-    if (eventMode === 'idle') return;
+  const hideEventOffers = (): void => {
+    breadRushUi.hideOffer();
+    pigeonDropUi.hideOffer();
+  };
+
+  const continueFromEvent = (eventId: PigeonEventId): void => {
+    if (eventMode === 'idle' || activeEventId !== eventId) return;
     eventMode = 'idle';
-    activeRun = null;
-    activeResult = null;
-    breadRushUi.hideEvent();
-    game.scene.stop('BreadRushScene');
+    activeEventId = null;
+    breadRushRun = null;
+    pigeonDropRun = null;
+    if (eventId === 'bread-rush') {
+      breadRushUi.hideEvent();
+      game.scene.stop('BreadRushScene');
+    } else {
+      pigeonDropUi.hideEvent();
+      game.scene.stop('PigeonDropScene');
+    }
     game.scene.wake('MainScene');
     resetSimulationClock();
     syncEventOffer();
   };
 
   const showBreadRushResult = (result: BreadRushResult): void => {
-    activeResult = result;
     eventMode = 'result';
     breadRushUi.showResult(
       result,
       breadRushService.canDouble(result),
       () => breadRushService.doubleResult(result),
-      continueFromBreadRush,
+      () => continueFromEvent('bread-rush'),
+    );
+  };
+
+  const showPigeonDropResult = (result: PigeonDropResult): void => {
+    eventMode = 'result';
+    pigeonDropUi.showResult(
+      result,
+      pigeonDropService.canDouble(result),
+      () => pigeonDropService.doubleResult(result),
+      () => continueFromEvent('pigeon-drop'),
     );
   };
 
@@ -123,41 +154,68 @@ async function bootstrap(): Promise<void> {
       return;
     }
 
-    activeRun = context;
-    activeResult = null;
+    breadRushRun = context;
+    activeEventId = 'bread-rush';
     eventMode = 'active';
-    breadRushUi.hideOffer();
+    hideEventOffers();
     breadRushUi.showActive();
     game.scene.sleep('MainScene');
     breadRushScene.configure({
       onSnapshot: (snapshot) => breadRushUi.updateActive(snapshot),
       onComplete: (snapshot) => {
-        if (eventMode !== 'active' || !activeRun) return;
-        showBreadRushResult(breadRushService.finishRun(activeRun, snapshot.score));
+        if (eventMode !== 'active' || activeEventId !== 'bread-rush' || !breadRushRun) return;
+        showBreadRushResult(breadRushService.finishRun(breadRushRun, snapshot.score));
       },
     });
     game.scene.start('BreadRushScene');
     resetSimulationClock();
   };
 
-  function syncEventOffer(): void {
-    if (
-      eventMode === 'idle'
-      && !store.isMutationEligible()
-      && !mutationUi.isVisible()
-      && breadRushService.isAvailable()
-    ) {
-      breadRushUi.showOffer(startBreadRush);
-    } else {
-      breadRushUi.hideOffer();
+  const startPigeonDrop = (): void => {
+    if (eventMode !== 'idle' || store.isMutationEligible() || mutationUi.isVisible()) return;
+    const context = pigeonDropService.startRun();
+    if (!context) {
+      syncEventOffer();
+      return;
     }
+
+    pigeonDropRun = context;
+    activeEventId = 'pigeon-drop';
+    eventMode = 'active';
+    hideEventOffers();
+    pigeonDropUi.showActive(() => pigeonDropScene.requestDrop());
+    game.scene.sleep('MainScene');
+    pigeonDropScene.configure({
+      onSnapshot: (snapshot) => pigeonDropUi.updateActive(snapshot),
+      onComplete: (snapshot) => {
+        if (eventMode !== 'active' || activeEventId !== 'pigeon-drop' || !pigeonDropRun) return;
+        showPigeonDropResult(pigeonDropService.finishRun(pigeonDropRun, snapshot.score, snapshot.attempts));
+      },
+    });
+    game.scene.start('PigeonDropScene');
+    resetSimulationClock();
+  };
+
+  function syncEventOffer(): void {
+    hideEventOffers();
+    if (eventMode !== 'idle' || store.isMutationEligible() || mutationUi.isVisible()) return;
+
+    const state = store.getSnapshot();
+    const eventId = selectEventOffer({
+      breadRush: breadRushService.isAvailable(state),
+      pigeonDrop: pigeonDropService.isAvailable(state),
+      lastEventId: state.events.lastEventId,
+    });
+
+    if (eventId === 'bread-rush') breadRushUi.showOffer(startBreadRush);
+    if (eventId === 'pigeon-drop') pigeonDropUi.showOffer(startPigeonDrop);
   }
 
   const showMutationChoice = async (): Promise<void> => {
     mutationOfferTimer = 0;
     if (disposed || eventMode !== 'idle' || mutationUi.isVisible() || !store.isMutationEligible()) return;
 
-    breadRushUi.hideOffer();
+    hideEventOffers();
     mutationPauseActive = true;
     await lifecycle.pause('mutation-choice');
     mutationUi.showChoice({
@@ -180,7 +238,7 @@ async function bootstrap(): Promise<void> {
 
   const scheduleMutationChoice = (delayMs: number): void => {
     if (mutationOfferTimer || mutationUi.isVisible() || !store.isMutationEligible()) return;
-    breadRushUi.hideOffer();
+    hideEventOffers();
     mutationOfferTimer = window.setTimeout(() => void showMutationChoice(), delayMs);
   };
 
@@ -220,7 +278,8 @@ async function bootstrap(): Promise<void> {
         }
       } else if (eventMode === 'active') {
         simulationAccumulator = 0;
-        breadRushScene.advanceActiveTime(frameDelta);
+        if (activeEventId === 'bread-rush') breadRushScene.advanceActiveTime(frameDelta);
+        if (activeEventId === 'pigeon-drop') pigeonDropScene.advanceActiveTime(frameDelta);
       } else {
         simulationAccumulator = 0;
       }
@@ -267,6 +326,7 @@ async function bootstrap(): Promise<void> {
       unsubscribeMutationWatcher();
       persist();
       mutationUi.destroy();
+      pigeonDropUi.destroy();
       breadRushUi.destroy();
       ui.destroy();
       game.destroy(true);
