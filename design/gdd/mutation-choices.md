@@ -1,9 +1,9 @@
 # Mutation Choices
 
-> **Status**: Designed v0.1
-> **Last Updated**: 2026-08-27
+> **Status**: Implemented v0.1
+> **Last Updated**: 2026-08-28
 > **Priority**: MVP Feature
-> **First eligibility target**: Total Upgrade Level ~150 / Growth Stage 5
+> **First eligibility target**: Total Upgrade Level 150 / Growth Stage 5
 
 ## 1. Overview
 
@@ -18,21 +18,21 @@ The player has grown a ridiculous pigeon far enough that it now evolves accordin
 ### First mutation trigger
 Default v0.1 eligibility:
 - Total Upgrade Level >= 150;
-- required Growth Stage reached;
+- Growth Stage 5 reached;
 - no unresolved higher-priority Growth ceremony;
 - mutation not already selected for this run.
 
-The offer appears after the Growth ceremony settles, not stacked on top of it.
+The offer appears after the Growth ceremony settles, not stacked on top of it. Runtime progression purchases are frozen while the eligible choice remains unresolved.
 
 ### Choice presentation
 Three cards display simultaneously when viewport allows, otherwise swipe/stack without hiding comparison information.
 
-Each card must show:
+Each card shows:
 - mutation name;
-- dominant visual silhouette/art preview;
+- dominant raster art preview;
 - exact mechanical modifiers;
 - plain-language playstyle description;
-- whether selection lasts until prestige.
+- persistence rule through prestige.
 
 No hidden random roll is involved.
 
@@ -45,47 +45,50 @@ Initial v0.1 modifiers:
 - passive systems continue normally but do not receive the ×1.35 active factor.
 
 Visual direction:
-- broader chest/body overlay;
-- stronger stance/legs;
+- broader power treatment around the generated hero;
+- stronger force/impact read;
 - more forceful peck recoil;
-- restrained gym/strength cue, not a copied internet character.
+- restrained strength cue, not a copied internet character.
 
 ### Mutation B — Business Pigeon
 Identity: passive/automation/offline.
 
 Initial v0.1 modifiers:
 - `passiveProduction ×1.35`;
-- offline efficiency `+0.10` absolute, still respecting global cap policy;
-- helper/business visual tier unlocked.
+- offline efficiency `+0.10` absolute, still respecting the global `0.85` cap;
+- helper/business visual treatment unlocked.
 
 Visual direction:
-- formal/business accessory set;
-- phone/laptop/briefcase-like helper props where readable;
-- helpers appear organized/industrial rather than muscular.
+- formal/business accessory treatment;
+- tie/briefcase-like generated raster cues where readable;
+- organized/industrial rather than muscular presentation.
 
 ### Mutation C — Chaos Pigeon
 Identity: crits/events/variance.
 
 Initial v0.1 modifiers:
-- crit chance `+0.05` absolute after normal crit calculation, respecting hard max;
+- crit chance `+0.05` absolute after normal crit calculation;
+- first-tier mutation crit hard cap `0.30`;
 - crit multiplier `×1.15`;
 - Pigeon Event base reward `×1.15`.
 
+The `0.30` hard cap is the minimal explicit v0.1 cap implied by adding five percentage points above the normal `0.25` Swag cap. It keeps the full advertised first-tier bonus meaningful without creating unspecified headroom for later mutation tiers.
+
 Visual direction:
-- asymmetrical/stranger accessories or aura;
+- asymmetrical chromatic/aura treatment;
 - stronger iridescent/unstable effects;
 - still compatible with base art bible and mobile readability.
 
 ### Persistence
-Mutation selection is stored as a stable mutation ID.
+Mutation selection is stored as an ordered list of stable mutation IDs. MVP only permits the first selection, but the state shape can accept later ordered mutation layers without replacing the persistence model.
 
-MVP mutation lasts for the current run until prestige/reset semantics are introduced. Normal save/load cannot reroll it.
+The first mutation lasts for the current run until prestige/reset semantics are introduced. Normal save/load cannot reroll it. The additive field remains backward-compatible with existing schema-v1 saves; absent/malformed mutation arrays sanitize safely.
 
 ### No trap choices
 Each mutation should produce a similar order-of-magnitude advantage for its intended playstyle. Telemetry compares progression speed by mutation. A visually appealing choice must not secretly be dramatically worse.
 
 ### Future mutations
-Later Growth/prestige tiers may add a second mutation layer or evolve the chosen branch, but MVP architecture should support an ordered list of mutation IDs/modifiers rather than a single hardcoded boolean.
+Later Growth/prestige tiers may add a second mutation layer or evolve the chosen branch. The current architecture already stores ordered IDs/modifiers instead of a single hardcoded boolean.
 
 ## 4. Formulas
 
@@ -97,26 +100,30 @@ Later Growth/prestige tiers may add a second mutation layer or evolve the chosen
 ### Business
 `finalPassiveRate = normalPassiveRate * 1.35`
 
-`finalOfflineEfficiency = min(offlineHardCap, normalOfflineEfficiency + 0.10)`
+`finalOfflineEfficiency = min(0.85, normalOfflineEfficiency + 0.10)`
 
 ### Chaos
-`finalCritChance = min(critHardCap, normalCritChance + 0.05)`
+`finalCritChance = min(0.30, normalCritChance + 0.05)`
 
 `finalCritMultiplier = normalCritMultiplier * 1.15`
 
 `finalEventReward = normalEventReward * 1.15`
 
-Mutation factors are modifier entries applied by the economy modifier pipeline; they do not rewrite canonical branch definitions.
+Mutation factors are modifier entries applied by the economy formula pipeline; they do not rewrite canonical branch definitions.
+
+Bread Rush reference income is mutation-aware so event rewards still scale with the player's current production profile; the Chaos event factor is then applied separately to the resulting base reward.
 
 ## 5. Edge Cases
 
-- Threshold crossed via bulk purchase: Growth ceremony resolves first, mutation decision queues next.
-- Browser closes on mutation screen before choice: state remains `eligible/unselected`; reopen returns to safe decision state after save load.
+- Threshold crossed via a future bulk purchase: Growth ceremony resolves first, mutation decision queues next.
+- Browser closes on mutation screen before choice: state remains `eligible/unselected`; reopen returns to the decision after safe load.
 - Selection callback repeated: idempotent; same selection does not stack modifier twice.
+- Different selection attempted after one is already locked: rejected; no reroll in the current run.
 - Player has no ads/network: mutation remains fully available; never monetized as a required choice.
-- Reduced motion: mutation reveal shortens animation but shows full visual preview/result.
+- Reduced motion: CSS honors the system reduced-motion preference while preserving the full preview/result.
 - Later balance update changes modifiers: stable mutation ID remains; current balance-version modifier definition applies unless migration policy explicitly snapshots it.
-- Crit hard cap with Chaos: excess bonus is not silently converted to another stat in MVP; UI can show capped value clearly.
+- Crit hard cap with Chaos: excess bonus is not converted to another stat in MVP; the UI states the `30%` hard cap explicitly.
+- Event availability is suppressed while the mutation decision is unresolved so the player cannot bypass the progression gate through Bread Rush.
 
 ## 6. Dependencies
 
@@ -146,15 +153,27 @@ Downstream:
 
 Balance target: no mutation should exceed another's modeled progression speed by >~15% under its intended comparable playstyle without a deliberate design reason.
 
-## 8. Acceptance Criteria
+`tools/balance/mutation_profiles.py` reads the shipped TypeScript mutation constants and compares deterministic Total Lv 150 active, passive/offline and event-heavy profiles. CI asserts the intended identity winners: Muscle for active, Business for passive/offline, Chaos for event-heavy.
 
-- [ ] Mutation offer becomes eligible at configured threshold and cannot appear before Growth ceremony settles.
-- [ ] All three cards show exact modifiers before selection.
-- [ ] Selection is persisted by stable ID and cannot be rerolled by refresh.
-- [ ] Selecting the same mutation twice cannot stack modifiers.
-- [ ] Muscle affects active production without unintentionally multiplying passive automation.
-- [ ] Business affects passive/offline without changing base upgrade prices.
-- [ ] Chaos respects crit hard cap and modifies event reward deterministically.
-- [ ] Each mutation has a visibly distinct runtime treatment compatible with simultaneous branch milestone layers.
-- [ ] Mutation choice requires no ad/payment.
-- [ ] Balance simulator can compare representative active/passive/event-heavy profiles across the three mutations.
+## 8. Implementation Notes — 2026-08-28
+
+- Runtime content: `src/content/mutation-content.ts`.
+- Authoritative selection/gating: `GameStore.selectMutation` / `GameStore.isMutationEligible`.
+- Persistence/offline: schema-v1 compatible `mutationIds` plus sanitization.
+- Presentation: generated raster treatment layers produced before build and consumed by Phaser; no SVG/runtime vector character fallback.
+- UI: dedicated DOM comparison modal with desktop three-card layout and compact mobile horizontal comparison.
+- Lifecycle: Growth ceremony receives the first beat; mutation modal then pauses gameplay using the existing pause-reason set and resumes only after a successful persisted selection.
+- QA: deterministic Vitest coverage plus browser capture of desktop choice, mobile choice and selected Business runtime state.
+
+## 9. Acceptance Criteria
+
+- [x] Mutation offer becomes eligible at configured threshold and cannot appear before Growth ceremony settles.
+- [x] All three cards show exact modifiers before selection.
+- [x] Selection is persisted by stable ID and cannot be rerolled by refresh.
+- [x] Selecting the same mutation twice cannot stack modifiers.
+- [x] Muscle affects active production without unintentionally multiplying passive automation.
+- [x] Business affects passive/offline without changing base upgrade prices.
+- [x] Chaos respects crit hard cap and modifies event reward deterministically.
+- [x] Each mutation has a visibly distinct raster runtime treatment compatible with the existing generated hero composition.
+- [x] Mutation choice requires no ad/payment.
+- [x] Balance tooling compares representative active/passive/event-heavy profiles across the three mutations and CI guards their intended identities.

@@ -103,8 +103,8 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
     const total = getTotalUpgradeLevel(state.branchLevels);
     const currentStage = getGrowthStage(total);
     const nextStage = getNextGrowthStage(total);
-    const passive = getPassiveRate(state.branchLevels);
-    const comboCap = getComboCap(state.branchLevels);
+    const passive = getPassiveRate(state.branchLevels, state.mutationIds);
+    const comboCap = getComboCap(state.branchLevels, state.mutationIds);
     const comboMultiplier = 1 + (comboCap - 1) * state.comboCharge;
 
     featherTotal.textContent = formatEconomyNumber(state.feathers);
@@ -283,13 +283,13 @@ function renderUpgradeCards(
       button.addEventListener('click', () => {
         const result = store.purchase(branch);
         if (!result.ok) {
-          showToast(
-            toastHost,
-            result.reason === 'locked'
-              ? `Reach Total Lv ${definition.unlockTotalLevel} to unlock ${definition.name}.`
-              : 'Not enough Feathers.',
-            'reject',
-          );
+          let message = 'Not enough Feathers.';
+          if (result.reason === 'locked') {
+            message = `Reach Total Lv ${definition.unlockTotalLevel} to unlock ${definition.name}.`;
+          } else if (result.reason === 'mutation-required') {
+            message = 'Choose your Mutation before buying more upgrades.';
+          }
+          showToast(toastHost, message, 'reject');
           card?.classList.remove('reject');
           void card?.offsetWidth;
           card?.classList.add('reject');

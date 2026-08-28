@@ -28,5 +28,7 @@ jobs:
             echo 'SVG production art is forbidden.' >&2
             exit 1
           fi
+      - name: Check mutation profile identities
+        run: python tools/balance/mutation_profiles.py --check
       - run: npm run test
       - run: npm run build

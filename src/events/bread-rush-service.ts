@@ -1,6 +1,6 @@
 import { BREAD_RUSH } from '../content/event-content';
 import { getBreadRushReferenceIncome, getBreadRushReward } from '../domain/bread-rush';
-import { getTotalUpgradeLevel } from '../domain/economy-formulas';
+import { getEventRewardMultiplier, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 import type { MonetizationService, RewardDoubleResult } from '../monetization/monetization-service';
@@ -30,7 +30,8 @@ export class BreadRushService {
   ) {}
 
   public isAvailable(state: Readonly<GameState> = this.store.getSnapshot()): boolean {
-    return getTotalUpgradeLevel(state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
+    return !this.store.isMutationEligible(state)
+      && getTotalUpgradeLevel(state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
       && state.events.breadRushCooldownSeconds <= 0;
   }
 
@@ -39,16 +40,18 @@ export class BreadRushService {
     if (!this.isAvailable(state)) return null;
     return {
       runId,
-      referenceIncomePerSecond: getBreadRushReferenceIncome(state.branchLevels),
+      referenceIncomePerSecond: getBreadRushReferenceIncome(state.branchLevels, state.mutationIds),
       previousBest: state.events.breadRushBestScore,
     };
   }
 
   public finishRun(context: BreadRushRunContext, score: number): BreadRushResult {
     const breakdown = getBreadRushReward(score, context.referenceIncomePerSecond);
+    const state = this.store.getSnapshot();
+    const eventReward = breakdown.reward * getEventRewardMultiplier(state.mutationIds);
     const safeScore = Math.max(0, Math.floor(Number.isFinite(score) ? score : 0));
     const baseTransactionId = `event:bread-rush:${context.runId}:base`;
-    const baseApply = this.store.applyRewardOnce(baseTransactionId, breakdown.reward);
+    const baseApply = this.store.applyRewardOnce(baseTransactionId, eventReward);
 
     if (baseApply.applied) {
       this.store.recordBreadRushCompletion(safeScore);
@@ -59,7 +62,7 @@ export class BreadRushService {
     return {
       runId: context.runId,
       score: safeScore,
-      baseReward: breakdown.reward,
+      baseReward: eventReward,
       performanceMultiplier: breakdown.performanceMultiplier,
       previousBest: context.previousBest,
       bestScore,

@@ -1,15 +1,18 @@
 import Phaser from 'phaser';
-import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
+import { MUTATION_DEFINITIONS, MUTATION_ORDER, type MutationId } from '../content/mutation-content';
+import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 
 const HERO_TEXTURE = 'generated-main-hero';
 const HERO_PATH = '/assets/generated/main_scene_hero.webp';
+const MUTATION_TEXTURE_PREFIX = 'generated-mutation-';
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
   private readonly onReady: (() => void) | undefined;
   private hero?: Phaser.GameObjects.Image;
+  private mutationLayer?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
@@ -26,11 +29,19 @@ export class MainScene extends Phaser.Scene {
 
   public preload(): void {
     this.load.image(HERO_TEXTURE, HERO_PATH);
+    for (const mutationId of MUTATION_ORDER) {
+      this.load.image(`${MUTATION_TEXTURE_PREFIX}${mutationId}`, MUTATION_DEFINITIONS[mutationId].art);
+    }
     this.load.image('tap-burst', '/assets/ui/tap_burst.png');
   }
 
   public create(): void {
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
+    this.mutationLayer = this.add
+      .image(0, 0, `${MUTATION_TEXTURE_PREFIX}muscle`)
+      .setOrigin(0.5)
+      .setDepth(5)
+      .setAlpha(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -74,23 +85,44 @@ export class MainScene extends Phaser.Scene {
       .setPosition(sceneWidth / 2, sceneHeight / 2)
       .setScale(this.heroBaseScale)
       .setAngle(0);
+
+    if (this.mutationLayer) {
+      this.mutationLayer
+        .setPosition(this.hero.x, this.hero.y)
+        .setScale(this.heroBaseScale)
+        .setAngle(0);
+    }
   }
 
   private renderState(state: Readonly<GameState>): void {
     const previousStage = this.lastGrowthStage;
+    const previousMutation = this.lastState?.mutationIds.at(-1);
     const total = getTotalUpgradeLevel(state.branchLevels);
     const stage = getGrowthStage(total);
+    const currentMutation = state.mutationIds.at(-1);
     this.lastGrowthStage = stage.id;
     this.lastState = state;
-    this.applyVisualState(state.branchLevels);
+    this.applyVisualState(currentMutation);
 
     if (stage.id > previousStage && (previousStage !== 0 || total >= 10)) {
       this.playGrowthCeremony(stage.name);
     }
+
+    if (currentMutation && currentMutation !== previousMutation) {
+      this.playMutationReveal(currentMutation);
+    }
   }
 
-  private applyVisualState(_levels: BranchLevels): void {
+  private applyVisualState(mutationId: MutationId | undefined): void {
     this.layout();
+    if (!this.mutationLayer) return;
+    if (!mutationId) {
+      this.mutationLayer.setAlpha(0);
+      return;
+    }
+    this.mutationLayer
+      .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
+      .setAlpha(1);
   }
 
   private isPointerOnPigeon(x: number, y: number): boolean {
@@ -106,18 +138,24 @@ export class MainScene extends Phaser.Scene {
 
   private playTapFeedback(x: number, y: number, result: TapResult): void {
     if (!this.hero || !this.tapBurst) return;
+    const mutation = this.lastState?.mutationIds.at(-1);
+    const muscleImpact = mutation === 'muscle' ? 1.35 : 1;
+    const chaosImpact = mutation === 'chaos' && result.critical ? 1.25 : 1;
 
-    this.cameras.main.shake(result.critical ? 90 : 55, result.critical ? 0.0014 : 0.00065);
+    this.cameras.main.shake(
+      (result.critical ? 90 : 55) * muscleImpact,
+      (result.critical ? 0.0014 : 0.00065) * chaosImpact,
+    );
     this.tapBurst
       .setPosition(x, y)
       .setAlpha(result.critical ? 1 : 0.72)
-      .setScale(result.critical ? 0.8 : 0.5);
+      .setScale((result.critical ? 0.8 : 0.5) * chaosImpact);
     this.tweens.killTweensOf(this.tapBurst);
     this.tweens.add({
       targets: this.tapBurst,
       alpha: 0,
-      scale: result.critical ? 1.4 : 0.9,
-      duration: 260,
+      scale: (result.critical ? 1.4 : 0.9) * chaosImpact,
+      duration: mutation === 'muscle' ? 220 : 260,
       ease: 'Quad.Out',
     });
 
@@ -183,6 +221,25 @@ export class MainScene extends Phaser.Scene {
       yoyo: true,
       hold: 650,
       onComplete: () => label.destroy(),
+    });
+  }
+
+  private playMutationReveal(mutationId: MutationId): void {
+    if (!this.mutationLayer) return;
+    this.mutationLayer
+      .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
+      .setAlpha(0)
+      .setScale(this.heroBaseScale * 1.08);
+    this.cameras.main.flash(220, 245, 216, 107, false);
+    this.cameras.main.shake(260, mutationId === 'muscle' ? 0.0045 : 0.0032);
+    this.tweens.killTweensOf(this.mutationLayer);
+    this.tweens.add({
+      targets: this.mutationLayer,
+      alpha: 1,
+      scaleX: this.heroBaseScale,
+      scaleY: this.heroBaseScale,
+      duration: 420,
+      ease: 'Back.Out',
     });
   }
 }

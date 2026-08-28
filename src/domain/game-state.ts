@@ -1,4 +1,5 @@
 import { BALANCE_VERSION, type UpgradeBranchId } from '../content/economy-content';
+import type { MutationId } from '../content/mutation-content';
 import { createEmptyBranchLevels, type BranchLevels } from './economy-formulas';
 
 export interface EventProgressState {
@@ -12,6 +13,7 @@ export interface GameState {
   balanceVersion: string;
   feathers: number;
   branchLevels: BranchLevels;
+  mutationIds: MutationId[];
   comboCharge: number;
   lastTapAt: number;
   saveRevision: number;
@@ -27,6 +29,7 @@ export function createNewGameState(now = Date.now()): GameState {
     balanceVersion: BALANCE_VERSION,
     feathers: 0,
     branchLevels: createEmptyBranchLevels(),
+    mutationIds: [],
     comboCharge: 0,
     lastTapAt: 0,
     saveRevision: 0,
@@ -45,6 +48,7 @@ export function cloneState(state: GameState): GameState {
   return {
     ...state,
     branchLevels: { ...state.branchLevels },
+    mutationIds: [...state.mutationIds],
     discoveredGrowthStages: [...state.discoveredGrowthStages],
     appliedRewardIds: [...state.appliedRewardIds],
     events: { ...state.events },

@@ -1,9 +1,11 @@
-import { getPassiveRate } from '../domain/economy-formulas';
+import { isMutationId, type MutationId } from '../content/mutation-content';
+import { getOfflineEfficiency, getPassiveRate } from '../domain/economy-formulas';
 import { createNewGameState, type GameState } from '../domain/game-state';
 
 const SAVE_KEY = 'pigeon-maxxing:save:v1';
 const OFFLINE_CAP_SECONDS = 8 * 60 * 60;
 const MAX_APPLIED_REWARD_IDS = 128;
+const MAX_PERSISTED_MUTATIONS = 8;
 
 export interface LoadResult {
   readonly state: GameState;
@@ -32,6 +34,10 @@ function sanitizeState(candidate: unknown, now: number): GameState {
     )))).slice(-MAX_APPLIED_REWARD_IDS)
     : [];
 
+  const mutationIds: MutationId[] = Array.isArray(raw.mutationIds)
+    ? Array.from(new Set(raw.mutationIds.filter(isMutationId))).slice(0, MAX_PERSISTED_MUTATIONS)
+    : [];
+
   const rawEvents = raw.events && typeof raw.events === 'object' ? raw.events : fresh.events;
   const breadRushBestScore = Number.isFinite(rawEvents.breadRushBestScore)
     ? Math.max(0, Math.floor(rawEvents.breadRushBestScore))
@@ -55,6 +61,7 @@ function sanitizeState(candidate: unknown, now: number): GameState {
       swag: readLevel('swag'),
       brain: readLevel('brain'),
     },
+    mutationIds,
     comboCharge: 0,
     lastTapAt: 0,
     saveRevision: Number.isFinite(raw.saveRevision) ? Math.max(0, Math.floor(raw.saveRevision as number)) : 0,
@@ -78,8 +85,8 @@ export function loadGame(now = Date.now(), storage: Pick<Storage, 'getItem'> = l
   try {
     const state = sanitizeState(JSON.parse(serialized), now);
     const elapsedSeconds = Math.max(0, Math.min(OFFLINE_CAP_SECONDS, (now - state.lastSavedAt) / 1000));
-    const offlineEfficiency = Math.min(0.85, 0.5 + state.branchLevels.brain * 0.005);
-    const offlineFeathers = getPassiveRate(state.branchLevels) * elapsedSeconds * offlineEfficiency;
+    const offlineEfficiency = getOfflineEfficiency(state.branchLevels, state.mutationIds);
+    const offlineFeathers = getPassiveRate(state.branchLevels, state.mutationIds) * elapsedSeconds * offlineEfficiency;
     return { state, offlineFeathers, elapsedSeconds };
   } catch {
     return { state: createNewGameState(now), offlineFeathers: 0, elapsedSeconds: 0 };
@@ -94,6 +101,7 @@ export function saveGame(
   const payload: GameState = {
     ...state,
     branchLevels: { ...state.branchLevels },
+    mutationIds: [...state.mutationIds].slice(0, MAX_PERSISTED_MUTATIONS),
     comboCharge: 0,
     lastTapAt: 0,
     lastSavedAt: now,

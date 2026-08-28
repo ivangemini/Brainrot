@@ -4,6 +4,20 @@ import {
   type GrowthStageDefinition,
   type UpgradeBranchId,
 } from '../content/economy-content';
+import {
+  BASE_CRIT_CHANCE_CAP,
+  BUSINESS_OFFLINE_EFFICIENCY_BONUS,
+  BUSINESS_PASSIVE_MULTIPLIER,
+  CHAOS_CRIT_CHANCE_BONUS,
+  CHAOS_CRIT_MULTIPLIER,
+  CHAOS_EVENT_REWARD_MULTIPLIER,
+  MUSCLE_ACTIVE_TAP_MULTIPLIER,
+  MUSCLE_COMBO_CAP_BONUS,
+  MUTATION_CRIT_CHANCE_HARD_CAP,
+  OFFLINE_EFFICIENCY_HARD_CAP,
+  hasMutation,
+  type MutationId,
+} from '../content/mutation-content';
 
 const BEAK_MILESTONES: readonly [number, number][] = [
   [10, 1.5],
@@ -71,32 +85,49 @@ export function getBodyMultiplier(levels: BranchLevels): number {
   return (1 + 0.04 * levels.body) * milestoneMultiplier(levels.body, BODY_MILESTONES);
 }
 
-export function getComboCap(levels: BranchLevels): number {
-  return 1 + Math.min(1.5, 0.03 * levels.wings);
+export function getComboCap(levels: BranchLevels, mutations: readonly MutationId[] = []): number {
+  const base = 1 + Math.min(1.5, 0.03 * levels.wings);
+  return base + (hasMutation(mutations, 'muscle') ? MUSCLE_COMBO_CAP_BONUS : 0);
 }
 
-export function getCritChance(levels: BranchLevels): number {
-  return Math.min(0.25, 0.02 + 0.003 * levels.swag);
+export function getCritChance(levels: BranchLevels, mutations: readonly MutationId[] = []): number {
+  const base = Math.min(BASE_CRIT_CHANCE_CAP, 0.02 + 0.003 * levels.swag);
+  if (!hasMutation(mutations, 'chaos')) return base;
+  return Math.min(MUTATION_CRIT_CHANCE_HARD_CAP, base + CHAOS_CRIT_CHANCE_BONUS);
 }
 
-export function getCritMultiplier(levels: BranchLevels): number {
-  return 3 + 0.04 * levels.swag;
+export function getCritMultiplier(levels: BranchLevels, mutations: readonly MutationId[] = []): number {
+  const base = 3 + 0.04 * levels.swag;
+  return base * (hasMutation(mutations, 'chaos') ? CHAOS_CRIT_MULTIPLIER : 1);
 }
 
-export function getPassiveRate(levels: BranchLevels): number {
+export function getPassiveRate(levels: BranchLevels, mutations: readonly MutationId[] = []): number {
   const bodyMultiplier = getBodyMultiplier(levels);
   const nest = 0.3 * levels.nest * milestoneMultiplier(levels.nest, NEST_MILESTONES);
   const autoTaps = 0.12 * levels.brain * milestoneMultiplier(levels.brain, BRAIN_MILESTONES);
-  return bodyMultiplier * (nest + autoTaps * getBaseTap(levels));
+  const base = bodyMultiplier * (nest + autoTaps * getBaseTap(levels));
+  return base * (hasMutation(mutations, 'business') ? BUSINESS_PASSIVE_MULTIPLIER : 1);
+}
+
+export function getOfflineEfficiency(levels: BranchLevels, mutations: readonly MutationId[] = []): number {
+  const base = 0.5 + levels.brain * 0.005;
+  const bonus = hasMutation(mutations, 'business') ? BUSINESS_OFFLINE_EFFICIENCY_BONUS : 0;
+  return Math.min(OFFLINE_EFFICIENCY_HARD_CAP, base + bonus);
+}
+
+export function getEventRewardMultiplier(mutations: readonly MutationId[] = []): number {
+  return hasMutation(mutations, 'chaos') ? CHAOS_EVENT_REWARD_MULTIPLIER : 1;
 }
 
 export function getTapPayout(
   levels: BranchLevels,
   comboMultiplier: number,
   critical: boolean,
+  mutations: readonly MutationId[] = [],
 ): number {
-  const critFactor = critical ? getCritMultiplier(levels) : 1;
-  return getBaseTap(levels) * getBodyMultiplier(levels) * comboMultiplier * critFactor;
+  const critFactor = critical ? getCritMultiplier(levels, mutations) : 1;
+  const activeFactor = hasMutation(mutations, 'muscle') ? MUSCLE_ACTIVE_TAP_MULTIPLIER : 1;
+  return getBaseTap(levels) * getBodyMultiplier(levels) * comboMultiplier * critFactor * activeFactor;
 }
 
 export function getGrowthStage(totalLevel: number): GrowthStageDefinition {
