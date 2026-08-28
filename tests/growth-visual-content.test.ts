@@ -57,6 +57,18 @@ describe('Growth visual content', () => {
     }
   });
 
+  it('keeps Mutation treatments secondary once the world becomes the scale reference', () => {
+    for (const stageId of [0, 1, 2, 3]) {
+      expect(getGrowthVisual(stageId).mutationAlpha).toBe(1);
+    }
+
+    const giantAlphas = [4, 5, 6, 7, 8].map((stageId) => getGrowthVisual(stageId).mutationAlpha);
+    expect(giantAlphas[0]).toBeLessThanOrEqual(0.34);
+    for (let index = 1; index < giantAlphas.length; index += 1) {
+      expect(giantAlphas[index]).toBeLessThan(giantAlphas[index - 1]!);
+    }
+  });
+
   it('falls back safely to the base hero for unknown stage ids', () => {
     expect(getGrowthVisual(999)).toBe(getGrowthVisual(0));
   });
