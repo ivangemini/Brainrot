@@ -91,7 +91,7 @@ Final gameplay/art presentation HEAD before housekeeping: `34a38462d511ac5cf9064
   - production Growth/Mutation raster identity remains intact behind the event VFX;
   - HUD label correctly says `ATTEMPTS`.
 
-The final housekeeping branch head must also pass CI and Visual QA before PR #4 is merged.
+Final housekeeping removes the obsolete generator/build dependency and stale offer-image dependency. PR #4 may merge only after the resulting branch head passes CI and Visual QA.
 
 ## Current Runtime Status
 
@@ -111,4 +111,4 @@ The final housekeeping branch head must also pass CI and Visual QA before PR #4 
 
 ## Blockers
 
-None for continued development. Pigeon Drop v1 and the two-event MVP set are implemented; final housekeeping is complete pending branch-head verification and merge.
+None for continued development. Pigeon Drop v1 and the two-event MVP set are implemented; housekeeping changes are complete and awaiting final branch-head verification/merge.
