@@ -146,6 +146,15 @@
     font-weight: 850;
     letter-spacing: 0.12em;
   }
+
+  /* Event mode owns the outer matte. Main-game CTA/rail must disappear even
+     when the onboarding hint already carries its is-hidden state class. */
+  #game-ui.event-mode .tap-hint,
+  #game-ui.event-mode .tap-hint.is-hidden,
+  #game-ui.event-mode .scene-rail {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 @media (max-width: 900px) and (orientation: portrait) {
