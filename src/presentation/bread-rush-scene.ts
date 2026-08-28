@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
+import { getGrowthVisual } from '../content/growth-visual-content';
+import { MUTATION_DEFINITIONS } from '../content/mutation-content';
 import { BreadRushSession, type BreadRushSnapshot, type BreadTarget } from '../domain/bread-rush';
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 
-const HERO_TEXTURE = 'generated-main-hero';
-const HERO_PATH = '/assets/generated/main_scene_hero.webp';
 const BREAD_TEXTURE = 'generated-bread-target';
 const BREAD_PATH = '/assets/generated/bread_target.png';
+const MUTATION_TEXTURE_PREFIX = 'generated-mutation-';
 
 export interface BreadRushSceneCallbacks {
   readonly onSnapshot: (snapshot: BreadRushSnapshot) => void;
@@ -18,7 +19,9 @@ export class BreadRushScene extends Phaser.Scene {
   private callbacks: BreadRushSceneCallbacks | undefined;
   private readonly targetSprites = new Map<number, Phaser.GameObjects.Image>();
   private hero: Phaser.GameObjects.Image | undefined;
+  private mutationLayer: Phaser.GameObjects.Image | undefined;
   private heroBaseScale = 1;
+  private mutationBaseScale = 1;
   private completedSignaled = false;
   private readonly onResize = (): void => this.layout();
 
@@ -34,8 +37,19 @@ export class BreadRushScene extends Phaser.Scene {
   }
 
   public preload(): void {
-    if (!this.textures.exists(HERO_TEXTURE)) this.load.image(HERO_TEXTURE, HERO_PATH);
-    this.load.image(BREAD_TEXTURE, BREAD_PATH);
+    const state = this.store.getSnapshot();
+    const stage = getGrowthStage(getTotalUpgradeLevel(state.branchLevels));
+    const visual = getGrowthVisual(stage.id);
+    if (!this.textures.exists(visual.textureKey)) this.load.image(visual.textureKey, visual.art);
+
+    const mutationId = state.mutationIds.at(-1);
+    if (mutationId) {
+      const mutationKey = `${MUTATION_TEXTURE_PREFIX}${mutationId}`;
+      if (!this.textures.exists(mutationKey)) {
+        this.load.image(mutationKey, MUTATION_DEFINITIONS[mutationId].art);
+      }
+    }
+    if (!this.textures.exists(BREAD_TEXTURE)) this.load.image(BREAD_TEXTURE, BREAD_PATH);
   }
 
   public create(): void {
@@ -43,11 +57,23 @@ export class BreadRushScene extends Phaser.Scene {
     this.targetSprites.clear();
     this.session = new BreadRushSession();
 
-    this.hero = this.add.image(0, 0, HERO_TEXTURE)
+    const state = this.store.getSnapshot();
+    const stage = getGrowthStage(getTotalUpgradeLevel(state.branchLevels));
+    const visual = getGrowthVisual(stage.id);
+    const mutationId = state.mutationIds.at(-1);
+
+    this.hero = this.add.image(0, 0, visual.textureKey)
       .setOrigin(0.5)
       .setTint(0xd7ddd3)
       .setAlpha(0.94)
       .setDepth(0);
+
+    if (mutationId) {
+      this.mutationLayer = this.add.image(0, 0, `${MUTATION_TEXTURE_PREFIX}${mutationId}`)
+        .setOrigin(0.5)
+        .setAlpha(0.76)
+        .setDepth(3);
+    }
 
     this.scale.on('resize', this.onResize);
     this.events.once('shutdown', () => {
@@ -57,6 +83,7 @@ export class BreadRushScene extends Phaser.Scene {
       this.session = undefined;
       this.callbacks = undefined;
       this.hero = undefined;
+      this.mutationLayer = undefined;
     });
     this.layout();
     this.callbacks?.onSnapshot(this.session.getSnapshot());
@@ -81,12 +108,19 @@ export class BreadRushScene extends Phaser.Scene {
 
     if (this.hero) {
       const state = this.store.getSnapshot();
-      const stageId = getGrowthStage(getTotalUpgradeLevel(state.branchLevels)).id;
+      const stage = getGrowthStage(getTotalUpgradeLevel(state.branchLevels));
+      const visual = getGrowthVisual(stage.id);
+      if (this.hero.texture.key !== visual.textureKey) this.hero.setTexture(visual.textureKey);
       const coverScale = Math.max(width / this.hero.width, height / this.hero.height);
-      this.heroBaseScale = coverScale * (1 + Math.min(stageId, 6) * 0.012);
+      this.heroBaseScale = coverScale * visual.sceneZoom;
+      this.mutationBaseScale = this.heroBaseScale * visual.mutationScale;
       this.hero
         .setPosition(width / 2, height / 2)
         .setScale(this.heroBaseScale)
+        .setAngle(0);
+      this.mutationLayer
+        ?.setPosition(width / 2, height / 2)
+        .setScale(this.mutationBaseScale)
         .setAngle(0);
     }
 
