@@ -1,4 +1,8 @@
-import { BREAD_RUSH } from '../content/event-content';
+import {
+  BREAD_RUSH,
+  PIGEON_DROP,
+  PIGEON_EVENT_SHARED_COOLDOWN_SECONDS,
+} from '../content/event-content';
 import type { UpgradeBranchId } from '../content/economy-content';
 import {
   MUTATION_REQUIRED_GROWTH_STAGE,
@@ -101,13 +105,7 @@ export class GameStore {
       changed = true;
     }
 
-    if (this.state.events.breadRushCooldownSeconds > 0) {
-      const nextCooldown = Math.max(0, this.state.events.breadRushCooldownSeconds - deltaSeconds);
-      if (nextCooldown !== this.state.events.breadRushCooldownSeconds) {
-        this.state.events.breadRushCooldownSeconds = nextCooldown;
-        changed = true;
-      }
-    }
+    changed = this.decrementEventCooldowns(deltaSeconds) || changed;
 
     if (this.state.lastTapAt > 0 && now - this.state.lastTapAt > 750 && this.state.comboCharge > 0) {
       const retention = 1 + this.state.branchLevels.wings * 0.012;
@@ -220,10 +218,14 @@ export class GameStore {
     this.emit();
   }
 
-  public isBreadRushAvailable(): boolean {
-    return !this.isMutationEligible()
-      && getTotalUpgradeLevel(this.state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
-      && this.state.events.breadRushCooldownSeconds <= 0;
+  public isBreadRushAvailable(state: Readonly<GameState> = this.state): boolean {
+    return this.canOfferEvent(state, BREAD_RUSH.unlockTotalLevel)
+      && state.events.breadRushCooldownSeconds <= 0;
+  }
+
+  public isPigeonDropAvailable(state: Readonly<GameState> = this.state): boolean {
+    return this.canOfferEvent(state, PIGEON_DROP.unlockTotalLevel)
+      && state.events.pigeonDropCooldownSeconds <= 0;
   }
 
   public recordBreadRushCompletion(score: number): void {
@@ -231,6 +233,18 @@ export class GameStore {
     this.state.events.breadRushRuns += 1;
     this.state.events.breadRushBestScore = Math.max(this.state.events.breadRushBestScore, safeScore);
     this.state.events.breadRushCooldownSeconds = BREAD_RUSH.cooldownActiveSeconds;
+    this.state.events.sharedCooldownSeconds = PIGEON_EVENT_SHARED_COOLDOWN_SECONDS;
+    this.state.events.lastEventId = 'bread-rush';
+    this.emit();
+  }
+
+  public recordPigeonDropCompletion(score: number): void {
+    const safeScore = Math.max(0, Math.floor(Number.isFinite(score) ? score : 0));
+    this.state.events.pigeonDropRuns += 1;
+    this.state.events.pigeonDropBestScore = Math.max(this.state.events.pigeonDropBestScore, safeScore);
+    this.state.events.pigeonDropCooldownSeconds = PIGEON_DROP.cooldownActiveSeconds;
+    this.state.events.sharedCooldownSeconds = PIGEON_EVENT_SHARED_COOLDOWN_SECONDS;
+    this.state.events.lastEventId = 'pigeon-drop';
     this.emit();
   }
 
@@ -260,6 +274,31 @@ export class GameStore {
   public markSaved(now = Date.now()): void {
     this.state.lastSavedAt = now;
     this.state.saveRevision += 1;
+  }
+
+  private canOfferEvent(state: Readonly<GameState>, unlockTotalLevel: number): boolean {
+    return !this.isMutationEligible(state)
+      && getTotalUpgradeLevel(state.branchLevels) >= unlockTotalLevel
+      && state.events.sharedCooldownSeconds <= 0;
+  }
+
+  private decrementEventCooldowns(deltaSeconds: number): boolean {
+    let changed = false;
+    const keys = [
+      'breadRushCooldownSeconds',
+      'pigeonDropCooldownSeconds',
+      'sharedCooldownSeconds',
+    ] as const;
+    for (const key of keys) {
+      const current = this.state.events[key];
+      if (current <= 0) continue;
+      const next = Math.max(0, current - deltaSeconds);
+      if (next !== current) {
+        this.state.events[key] = next;
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   private emit(): void {
