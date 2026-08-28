@@ -8,9 +8,11 @@ interface Rect {
 }
 
 /**
- * Extends the approved portrait meme reference into wide/short viewports without
- * ever rendering a second copy of the pigeon. Both helpers are cropped from
- * environment-only regions at the far-left edge of the same generated raster.
+ * Extends the approved meme raster into viewport gaps without ever cloning the
+ * pigeon. The side extension mirrors the source's outermost jungle edge, so the
+ * pixel touching the hero scene is the same source edge pixel. The lower
+ * extension mirrors the final water rows, which reads as a natural reflection
+ * rather than a horizontally smeared strip.
  */
 export class MemeSceneBackdrop {
   private readonly leftFill: Phaser.GameObjects.Image;
@@ -30,12 +32,17 @@ export class MemeSceneBackdrop {
   ): void {
     const leftGap = Math.max(0, sceneBounds.x);
     if (leftGap > 1) {
-      this.mapCropToRect(
-        this.leftFill,
-        { x: 0, y: 0, width: sourceWidth * 0.24, height: sourceHeight },
-        { x: 0, y: 0, width: leftGap + 2, height: viewportHeight },
-      );
-      this.leftFill.setVisible(true);
+      const cropWidth = Math.max(1, sourceWidth * 0.2);
+      const scaleX = (leftGap + 2) / cropWidth;
+      const scaleY = sceneBounds.height / sourceHeight;
+
+      // Negative X scale makes the visible edge next to the main scene resolve
+      // to source x=0, eliminating the hard vertical seam from the old stretch.
+      this.leftFill
+        .setCrop(0, 0, cropWidth, sourceHeight)
+        .setScale(-scaleX, scaleY)
+        .setPosition(leftGap + 2, sceneBounds.y)
+        .setVisible(true);
     } else {
       this.leftFill.setVisible(false);
     }
@@ -43,23 +50,19 @@ export class MemeSceneBackdrop {
     const sceneBottom = sceneBounds.y + sceneBounds.height;
     const bottomGap = Math.max(0, viewportHeight - sceneBottom);
     if (bottomGap > 1) {
-      // Lower-left water/lily patch: deliberately excludes the central pigeon.
-      this.mapCropToRect(
-        this.bottomFill,
-        {
-          x: 0,
-          y: sourceHeight * 0.72,
-          width: sourceWidth * 0.24,
-          height: sourceHeight * 0.28,
-        },
-        {
-          x: 0,
-          y: sceneBottom - 1,
-          width: viewportWidth,
-          height: bottomGap + 2,
-        },
-      );
-      this.bottomFill.setVisible(true);
+      const cropY = sourceHeight * 0.92;
+      const cropHeight = Math.max(1, sourceHeight - cropY);
+      const scaleX = viewportWidth / sourceWidth;
+      const scaleY = (bottomGap + 2) / cropHeight;
+
+      // Mirror the entire last water band vertically. Its top boundary resolves
+      // to the same final raster row as the main scene, while the reflection
+      // continues naturally toward the bottom tray.
+      this.bottomFill
+        .setCrop(0, cropY, sourceWidth, cropHeight)
+        .setScale(scaleX, -scaleY)
+        .setPosition(0, sceneBottom + bottomGap + 1)
+        .setVisible(true);
     } else {
       this.bottomFill.setVisible(false);
     }
@@ -68,17 +71,5 @@ export class MemeSceneBackdrop {
   public destroy(): void {
     this.leftFill.destroy();
     this.bottomFill.destroy();
-  }
-
-  private mapCropToRect(image: Phaser.GameObjects.Image, crop: Rect, target: Rect): void {
-    const cropWidth = Math.max(1, crop.width);
-    const cropHeight = Math.max(1, crop.height);
-    const scaleX = target.width / cropWidth;
-    const scaleY = target.height / cropHeight;
-
-    image
-      .setCrop(crop.x, crop.y, cropWidth, cropHeight)
-      .setScale(scaleX, scaleY)
-      .setPosition(target.x - crop.x * scaleX, target.y - crop.y * scaleY);
   }
 }
