@@ -1,3 +1,4 @@
+import { isPigeonEventId } from '../content/event-content';
 import { isMutationId, type MutationId } from '../content/mutation-content';
 import { getOfflineEfficiency, getPassiveRate } from '../domain/economy-formulas';
 import { createNewGameState, type GameState } from '../domain/game-state';
@@ -39,15 +40,12 @@ function sanitizeState(candidate: unknown, now: number): GameState {
     : [];
 
   const rawEvents = raw.events && typeof raw.events === 'object' ? raw.events : fresh.events;
-  const breadRushBestScore = Number.isFinite(rawEvents.breadRushBestScore)
-    ? Math.max(0, Math.floor(rawEvents.breadRushBestScore))
-    : 0;
-  const breadRushRuns = Number.isFinite(rawEvents.breadRushRuns)
-    ? Math.max(0, Math.floor(rawEvents.breadRushRuns))
-    : 0;
-  const breadRushCooldownSeconds = Number.isFinite(rawEvents.breadRushCooldownSeconds)
-    ? Math.max(0, rawEvents.breadRushCooldownSeconds)
-    : 0;
+  const readEventInteger = (value: unknown): number => (
+    Number.isFinite(value) ? Math.max(0, Math.floor(value as number)) : 0
+  );
+  const readEventSeconds = (value: unknown): number => (
+    Number.isFinite(value) ? Math.max(0, value as number) : 0
+  );
 
   return {
     ...fresh,
@@ -71,9 +69,14 @@ function sanitizeState(candidate: unknown, now: number): GameState {
       : [0],
     appliedRewardIds: rewardIds,
     events: {
-      breadRushBestScore,
-      breadRushRuns,
-      breadRushCooldownSeconds,
+      breadRushBestScore: readEventInteger(rawEvents.breadRushBestScore),
+      breadRushRuns: readEventInteger(rawEvents.breadRushRuns),
+      breadRushCooldownSeconds: readEventSeconds(rawEvents.breadRushCooldownSeconds),
+      pigeonDropBestScore: readEventInteger(rawEvents.pigeonDropBestScore),
+      pigeonDropRuns: readEventInteger(rawEvents.pigeonDropRuns),
+      pigeonDropCooldownSeconds: readEventSeconds(rawEvents.pigeonDropCooldownSeconds),
+      sharedCooldownSeconds: readEventSeconds(rawEvents.sharedCooldownSeconds),
+      lastEventId: isPigeonEventId(rawEvents.lastEventId) ? rawEvents.lastEventId : null,
     },
   };
 }
