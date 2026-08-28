@@ -168,10 +168,12 @@ export class MainScene extends Phaser.Scene {
     });
 
     if (this.mutationLayer && mutationId) {
-      this.mutationLayer.setAlpha(0.25).setScale(this.mutationBaseScale * 1.04);
+      this.mutationLayer
+        .setAlpha(Math.min(0.16, nextVisual.mutationAlpha * 0.65))
+        .setScale(this.mutationBaseScale * 1.04);
       this.tweens.add({
         targets: this.mutationLayer,
-        alpha: 1,
+        alpha: nextVisual.mutationAlpha,
         scaleX: this.mutationBaseScale,
         scaleY: this.mutationBaseScale,
         duration: 500,
@@ -197,7 +199,7 @@ export class MainScene extends Phaser.Scene {
     this.mutationLayer
       .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
       .setScale(this.mutationBaseScale)
-      .setAlpha(1);
+      .setAlpha(visual.mutationAlpha);
     return sceneChanged;
   }
 
@@ -322,6 +324,7 @@ export class MainScene extends Phaser.Scene {
 
   private playMutationReveal(mutationId: MutationId): void {
     if (!this.mutationLayer) return;
+    const visual = getGrowthVisual(this.lastGrowthStage);
     this.mutationLayer
       .setTexture(`${MUTATION_TEXTURE_PREFIX}${mutationId}`)
       .setAlpha(0)
@@ -331,7 +334,7 @@ export class MainScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.mutationLayer);
     this.tweens.add({
       targets: this.mutationLayer,
-      alpha: 1,
+      alpha: visual.mutationAlpha,
       scaleX: this.mutationBaseScale,
       scaleY: this.mutationBaseScale,
       duration: 420,
