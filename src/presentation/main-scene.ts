@@ -3,21 +3,14 @@ import { MEME_PIGEON_HERO_DATA_URL } from '../assets/meme-pigeon/hero-data';
 import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../domain/economy-formulas';
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
-import {
-  getHeroSafeRect,
-  getMemePigeonFocalPosition,
-  getMemePigeonScenePlacement,
-  rectContainsBounds,
-} from './hero-layout';
+import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
-const BACKGROUND_TEXTURE = 'meme-pigeon-background';
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
   private readonly onReady: (() => void) | undefined;
   private hero?: Phaser.GameObjects.Image;
-  private background?: Phaser.GameObjects.Image;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
@@ -34,19 +27,17 @@ export class MainScene extends Phaser.Scene {
 
   public preload(): void {
     this.load.image(HERO_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
-    this.load.image(BACKGROUND_TEXTURE, MEME_PIGEON_HERO_DATA_URL);
     this.load.image('tap-burst', '/assets/ui/tap_burst.png');
   }
 
   public create(): void {
-    this.cameras.main.setBackgroundColor('#071b23');
-    this.background = this.add.image(0, 0, BACKGROUND_TEXTURE)
-      .setOrigin(0.5)
-      .setDepth(-20)
-      .setTint(0x7f9794)
-      .setAlpha(0.78);
+    // The approved meme raster is rendered exactly once. The old implementation
+    // rendered a second enlarged copy behind it, which created a visible ghost
+    // pigeon and poster-on-background look on desktop.
+    this.cameras.main.setBackgroundColor('#17382f');
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
+    this.game.canvas.dataset.heroLayers = '1';
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.isPointerOnPigeon(pointer.x, pointer.y)) return;
@@ -72,7 +63,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   private layout(): void {
-    if (!this.hero || !this.background) return;
+    if (!this.hero) return;
     const width = this.scale.width;
     const height = this.scale.height;
     const centerX = width / 2;
@@ -80,16 +71,6 @@ export class MainScene extends Phaser.Scene {
     const stageId = this.lastState
       ? getGrowthStage(getTotalUpgradeLevel(this.lastState.branchLevels)).id
       : 0;
-
-    const backgroundScale = Math.max(width / this.background.width, height / this.background.height) * 1.04;
-    const backgroundPosition = getMemePigeonFocalPosition(
-      width,
-      height,
-      this.background.width,
-      this.background.height,
-      backgroundScale,
-    );
-    this.background.setPosition(backgroundPosition.x, backgroundPosition.y).setScale(backgroundScale);
 
     const placement = getMemePigeonScenePlacement(width, height, this.hero.width, this.hero.height, stageId);
     this.heroBaseScale = placement.scale;
