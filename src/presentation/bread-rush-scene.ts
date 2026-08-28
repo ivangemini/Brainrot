@@ -198,10 +198,13 @@ export class BreadRushScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
     const portrait = height > width;
-    const left = width * 0.06;
-    const right = width * 0.94;
+    // On desktop the portrait meme raster is intentionally framed by HUD matte.
+    // Keep live targets inside the raster stage, not inside those matte gutters
+    // or the lower event footer. Portrait/mobile retains the broader play field.
+    const left = width * (portrait ? 0.06 : 0.20);
+    const right = width * (portrait ? 0.94 : 0.80);
     const top = height * (portrait ? 0.14 : 0.13);
-    const bottom = height * (portrait ? 0.74 : 0.86);
+    const bottom = height * (portrait ? 0.74 : 0.82);
     return {
       x: left + xNorm * (right - left),
       y: top + yNorm * (bottom - top),
