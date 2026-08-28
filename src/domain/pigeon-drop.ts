@@ -109,7 +109,9 @@ export class PigeonDropSession {
       const slice = Math.min(remaining, timeToEnd, timeToImpact, timeToReset);
 
       if (slice > 1e-9) {
-        this.moveTarget(slice);
+        // Lock the target under the aim line while the visible projectile falls.
+        // This makes the click itself authoritative and keeps feedback truthful.
+        if (this.dropElapsed === null) this.moveTarget(slice);
         this.activeElapsed += slice;
         if (this.dropElapsed !== null) this.dropElapsed += slice;
         if (this.resetRemaining > 0) this.resetRemaining = Math.max(0, this.resetRemaining - slice);
