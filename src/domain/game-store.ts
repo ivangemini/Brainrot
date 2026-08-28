@@ -1,6 +1,12 @@
 import { BREAD_RUSH } from '../content/event-content';
 import type { UpgradeBranchId } from '../content/economy-content';
 import {
+  MUTATION_REQUIRED_GROWTH_STAGE,
+  MUTATION_UNLOCK_TOTAL_LEVEL,
+  isMutationId,
+  type MutationId,
+} from '../content/mutation-content';
+import {
   getComboCap,
   getCritChance,
   getGrowthStage,
@@ -22,13 +28,19 @@ export interface TapResult {
 
 export interface PurchaseResult {
   readonly ok: boolean;
-  readonly reason?: 'locked' | 'insufficient';
+  readonly reason?: 'locked' | 'insufficient' | 'mutation-required';
   readonly branch: UpgradeBranchId;
   readonly oldLevel: number;
   readonly newLevel: number;
   readonly cost: number;
   readonly oldGrowthStage: number;
   readonly newGrowthStage: number;
+}
+
+export interface MutationSelectionResult {
+  readonly applied: boolean;
+  readonly mutationId: MutationId | null;
+  readonly reason?: 'invalid' | 'not-eligible' | 'already-selected';
 }
 
 export interface RewardApplyResult {
@@ -69,10 +81,10 @@ export class GameStore {
     this.state.comboCharge = Math.min(1, this.state.comboCharge + 0.045);
     this.state.lastTapAt = now;
 
-    const comboCap = getComboCap(this.state.branchLevels);
+    const comboCap = getComboCap(this.state.branchLevels, this.state.mutationIds);
     const comboMultiplier = 1 + (comboCap - 1) * this.state.comboCharge;
-    const critical = this.random() < getCritChance(this.state.branchLevels);
-    const payout = getTapPayout(this.state.branchLevels, comboMultiplier, critical);
+    const critical = this.random() < getCritChance(this.state.branchLevels, this.state.mutationIds);
+    const payout = getTapPayout(this.state.branchLevels, comboMultiplier, critical, this.state.mutationIds);
 
     this.state.feathers += payout;
     this.emit();
@@ -83,7 +95,7 @@ export class GameStore {
     if (!Number.isFinite(deltaSeconds) || deltaSeconds <= 0) return;
 
     let changed = false;
-    const passive = getPassiveRate(this.state.branchLevels);
+    const passive = getPassiveRate(this.state.branchLevels, this.state.mutationIds);
     if (passive > 0) {
       this.state.feathers += passive * deltaSeconds;
       changed = true;
@@ -113,6 +125,19 @@ export class GameStore {
     const oldLevel = this.state.branchLevels[branch];
     const oldGrowthStage = getGrowthStage(getTotalUpgradeLevel(this.state.branchLevels)).id;
     const cost = getUpgradeCost(branch, oldLevel);
+
+    if (this.isMutationEligible()) {
+      return {
+        ok: false,
+        reason: 'mutation-required',
+        branch,
+        oldLevel,
+        newLevel: oldLevel,
+        cost,
+        oldGrowthStage,
+        newGrowthStage: oldGrowthStage,
+      };
+    }
 
     if (!isBranchUnlocked(branch, this.state.branchLevels)) {
       return {
@@ -160,6 +185,35 @@ export class GameStore {
     };
   }
 
+  public isMutationEligible(state: Readonly<GameState> = this.state): boolean {
+    if (state.mutationIds.length > 0) return false;
+    const total = getTotalUpgradeLevel(state.branchLevels);
+    return total >= MUTATION_UNLOCK_TOTAL_LEVEL
+      && getGrowthStage(total).id >= MUTATION_REQUIRED_GROWTH_STAGE;
+  }
+
+  public selectMutation(value: string): MutationSelectionResult {
+    if (!isMutationId(value)) {
+      return { applied: false, mutationId: null, reason: 'invalid' };
+    }
+
+    if (this.state.mutationIds.includes(value)) {
+      return { applied: false, mutationId: value, reason: 'already-selected' };
+    }
+
+    if (!this.isMutationEligible()) {
+      return {
+        applied: false,
+        mutationId: this.state.mutationIds[0] ?? null,
+        reason: this.state.mutationIds.length > 0 ? 'already-selected' : 'not-eligible',
+      };
+    }
+
+    this.state.mutationIds.push(value);
+    this.emit();
+    return { applied: true, mutationId: value };
+  }
+
   public addFeathers(amount: number): void {
     if (!Number.isFinite(amount) || amount <= 0) return;
     this.state.feathers += amount;
@@ -167,7 +221,8 @@ export class GameStore {
   }
 
   public isBreadRushAvailable(): boolean {
-    return getTotalUpgradeLevel(this.state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
+    return !this.isMutationEligible()
+      && getTotalUpgradeLevel(this.state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
       && this.state.events.breadRushCooldownSeconds <= 0;
   }
 
