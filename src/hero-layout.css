@@ -1,10 +1,69 @@
 /* Hero-first layout overrides.
    The meme pigeon owns the visual center. UI must route around it, never over it. */
 
-/* The onboarding hint belongs to the reserved strip below the HUD, never on the
-   face/head of the centered pigeon. */
-.tap-hint {
-  top: 106px;
+@media (min-width: 861px) {
+  /* Wide portals expose space around the portrait meme raster. Treat that space
+     as intentional HUD matte instead of stretching/mirroring the production art. */
+  #game-ui::after {
+    content: "";
+    position: absolute;
+    z-index: 11;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      rgba(7, 18, 22, 0.72) 0%,
+      rgba(7, 18, 22, 0.34) 14%,
+      rgba(7, 18, 22, 0) 27%,
+      rgba(7, 18, 22, 0) 73%,
+      rgba(7, 18, 22, 0.24) 100%
+    );
+  }
+
+  #game-ui::before {
+    content: "";
+    position: absolute;
+    z-index: 13;
+    left: 12px;
+    right: calc(min(390px, 34vw) + 28px);
+    bottom: 12px;
+    height: 80px;
+    border: 1px solid rgba(245, 241, 232, 0.12);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)),
+      rgba(12, 22, 25, 0.91);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+  }
+
+  /* Permanent desktop CTA lives below the bird, aligned to the true viewport
+     center rather than to a left content column. */
+  .tap-hint,
+  .tap-hint.is-hidden {
+    top: auto;
+    bottom: 25px;
+    left: 50%;
+    opacity: 1;
+    transform: translateX(-50%);
+    padding: 9px 18px;
+    border-color: rgba(242, 200, 75, 0.24);
+    background: rgba(26, 27, 27, 0.72);
+  }
+
+  .event-mode::before {
+    content: "BREAD RUSH  •  CATCH THE BREAD  •  GOLD = 4";
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: rgba(242, 200, 75, 0.28);
+    color: rgba(245, 241, 232, 0.72);
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+  }
 }
 
 @media (max-width: 900px) and (orientation: portrait) {
