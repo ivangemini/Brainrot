@@ -23,14 +23,14 @@ export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
   host.className = 'pigeon-drop-host';
   host.innerHTML = `
     <button type="button" class="pigeon-drop-offer glass-panel" hidden>
-      <img src="/assets/ui/tap_burst.png" alt="" />
+      <img src="/assets/generated/pigeon_drop_target.png" alt="" />
       <span><small>NEW EVENT READY</small><strong>PIGEON DROP</strong></span>
       <b>PLAY</b>
     </button>
     <div class="pigeon-drop-hud" hidden>
       <div class="pigeon-drop-score glass-panel"><small>SCORE</small><strong>0</strong></div>
       <div class="pigeon-drop-title"><small>PIGEON EVENT</small><strong>PIGEON DROP</strong></div>
-      <div class="pigeon-drop-attempts glass-panel"><small>HITS</small><strong>0</strong></div>
+      <div class="pigeon-drop-attempts glass-panel"><small>ATTEMPTS</small><strong>0</strong></div>
       <div class="pigeon-drop-time glass-panel"><small>TIME</small><strong>30.0</strong></div>
       <div class="pigeon-drop-countdown"></div>
       <button type="button" class="pigeon-drop-action" disabled>
