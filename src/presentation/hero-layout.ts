@@ -50,7 +50,9 @@ export function getHeroSafeRect(viewportWidth: number, viewportHeight: number): 
   const left = 18;
   const top = 104;
   const right = viewportWidth - rightPanelWidth - 28;
-  const bottom = viewportHeight - 18;
+  // The lower 92px are a deliberate desktop interaction/footer zone. The hero
+  // never grows into it; its silhouette remains between the top HUD and CTA.
+  const bottom = viewportHeight - 104;
   return {
     x: left,
     y: top,
