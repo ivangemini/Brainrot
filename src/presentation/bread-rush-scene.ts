@@ -71,7 +71,7 @@ export class BreadRushScene extends Phaser.Scene {
     if (mutationId) {
       this.mutationLayer = this.add.image(0, 0, `${MUTATION_TEXTURE_PREFIX}${mutationId}`)
         .setOrigin(0.5)
-        .setAlpha(0.76)
+        .setAlpha(Math.min(0.76, visual.mutationAlpha * 0.82))
         .setDepth(3);
     }
 
@@ -121,6 +121,7 @@ export class BreadRushScene extends Phaser.Scene {
       this.mutationLayer
         ?.setPosition(width / 2, height / 2)
         .setScale(this.mutationBaseScale)
+        .setAlpha(Math.min(0.76, visual.mutationAlpha * 0.82))
         .setAngle(0);
     }
 
