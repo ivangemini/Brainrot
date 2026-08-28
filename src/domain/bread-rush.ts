@@ -1,10 +1,10 @@
 import { BREAD_RUSH, type BreadRushDefinition } from '../content/event-content';
+import type { MutationId } from '../content/mutation-content';
 import {
-  getBaseTap,
-  getBodyMultiplier,
   getCritChance,
   getCritMultiplier,
   getPassiveRate,
+  getTapPayout,
   type BranchLevels,
 } from './economy-formulas';
 
@@ -158,14 +158,15 @@ export class BreadRushSession {
   }
 }
 
-export function getBreadRushReferenceIncome(levels: BranchLevels): number {
-  const expectedCritFactor = 1 + getCritChance(levels) * (getCritMultiplier(levels) - 1);
-  const tapReference = getBaseTap(levels)
-    * getBodyMultiplier(levels)
+export function getBreadRushReferenceIncome(
+  levels: BranchLevels,
+  mutations: readonly MutationId[] = [],
+): number {
+  const expectedCritFactor = 1 + getCritChance(levels, mutations) * (getCritMultiplier(levels, mutations) - 1);
+  const tapReference = getTapPayout(levels, BREAD_RUSH.referenceComboMultiplier, false, mutations)
     * BREAD_RUSH.referenceTapsPerSecond
-    * BREAD_RUSH.referenceComboMultiplier
     * expectedCritFactor;
-  return Math.max(1, tapReference + getPassiveRate(levels));
+  return Math.max(1, tapReference + getPassiveRate(levels, mutations));
 }
 
 export function getBreadRushReward(
