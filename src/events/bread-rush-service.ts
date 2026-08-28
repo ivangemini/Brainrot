@@ -1,6 +1,5 @@
-import { BREAD_RUSH } from '../content/event-content';
 import { getBreadRushReferenceIncome, getBreadRushReward } from '../domain/bread-rush';
-import { getEventRewardMultiplier, getTotalUpgradeLevel } from '../domain/economy-formulas';
+import { getEventRewardMultiplier } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 import type { MonetizationService, RewardDoubleResult } from '../monetization/monetization-service';
@@ -30,9 +29,7 @@ export class BreadRushService {
   ) {}
 
   public isAvailable(state: Readonly<GameState> = this.store.getSnapshot()): boolean {
-    return !this.store.isMutationEligible(state)
-      && getTotalUpgradeLevel(state.branchLevels) >= BREAD_RUSH.unlockTotalLevel
-      && state.events.breadRushCooldownSeconds <= 0;
+    return this.store.isBreadRushAvailable(state);
   }
 
   public startRun(runId = createRunId()): BreadRushRunContext | null {
