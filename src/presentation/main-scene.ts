@@ -4,6 +4,7 @@ import { getGrowthStage, getTotalUpgradeLevel, type BranchLevels } from '../doma
 import type { GameStore, TapResult } from '../domain/game-store';
 import type { GameState } from '../domain/game-state';
 import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
+import { MemeSceneBackdrop } from './meme-scene-backdrop';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
 
@@ -11,6 +12,7 @@ export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
   private readonly onReady: (() => void) | undefined;
   private hero?: Phaser.GameObjects.Image;
+  private backdrop?: MemeSceneBackdrop;
   private tapBurst?: Phaser.GameObjects.Image;
   private lastState?: Readonly<GameState>;
   private unsubscribe?: () => void;
@@ -31,10 +33,10 @@ export class MainScene extends Phaser.Scene {
   }
 
   public create(): void {
-    // The approved meme raster is rendered exactly once. The old implementation
-    // rendered a second enlarged copy behind it, which created a visible ghost
-    // pigeon and poster-on-background look on desktop.
+    // The approved meme raster is rendered exactly once with the full pigeon.
+    // Wide/short viewport gaps are extended only from environment-only edge crops.
     this.cameras.main.setBackgroundColor('#17382f');
+    this.backdrop = new MemeSceneBackdrop(this, HERO_TEXTURE, -10);
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
     this.game.canvas.dataset.heroLayers = '1';
@@ -75,6 +77,15 @@ export class MainScene extends Phaser.Scene {
     const placement = getMemePigeonScenePlacement(width, height, this.hero.width, this.hero.height, stageId);
     this.heroBaseScale = placement.scale;
     this.hero.setPosition(placement.x, placement.y).setScale(this.heroBaseScale).setAngle(0);
+
+    const displayWidth = this.hero.width * this.heroBaseScale;
+    const displayHeight = this.hero.height * this.heroBaseScale;
+    this.backdrop?.layout(width, height, this.hero.width, this.hero.height, {
+      x: placement.x - displayWidth / 2,
+      y: placement.y - displayHeight / 2,
+      width: displayWidth,
+      height: displayHeight,
+    });
 
     const safeRect = getHeroSafeRect(width, height);
     this.game.canvas.dataset.heroSafe = String(rectContainsBounds(safeRect, placement.silhouetteBounds, 2));
