@@ -6,6 +6,7 @@ on:
       - 'codex/bread-rush-v1'
       - 'codex/generated-art-runtime-v2'
       - 'codex/mutation-choice-v1'
+      - 'codex/growth-art-stages-v1'
       - main
   workflow_dispatch:
 
