@@ -23,7 +23,7 @@ export function createPigeonDropUi(root: HTMLElement): PigeonDropUi {
   host.className = 'pigeon-drop-host';
   host.innerHTML = `
     <button type="button" class="pigeon-drop-offer glass-panel" hidden>
-      <img src="/assets/generated/pigeon_drop_target.png" alt="" />
+      <img src="/assets/generated/main_scene_hero.webp" alt="" />
       <span><small>NEW EVENT READY</small><strong>PIGEON DROP</strong></span>
       <b>PLAY</b>
     </button>
