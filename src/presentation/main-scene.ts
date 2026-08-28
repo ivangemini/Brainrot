@@ -6,7 +6,6 @@ import type { GameState } from '../domain/game-state';
 import { getHeroSafeRect, getMemePigeonScenePlacement, rectContainsBounds } from './hero-layout';
 
 const HERO_TEXTURE = 'meme-pigeon-hero';
-const HERO_VISIBLE_SOURCE_BOTTOM = 0.94;
 
 export class MainScene extends Phaser.Scene {
   private readonly store: GameStore;
@@ -36,10 +35,6 @@ export class MainScene extends Phaser.Scene {
     // are presentation matte/UI space; never stretch, mirror or clone the bird.
     this.cameras.main.setBackgroundColor('#0b171b');
     this.hero = this.add.image(0, 0, HERO_TEXTURE).setOrigin(0.5).setDepth(0);
-    // The source carries a small unused lower-right opaque remnant below the
-    // readable pigeon. Clip at the canonical silhouette floor so it can never
-    // appear as a detached square beneath the stage on wide layouts.
-    this.hero.setCrop(0, 0, this.hero.width, this.hero.height * HERO_VISIBLE_SOURCE_BOTTOM);
     this.tapBurst = this.add.image(0, 0, 'tap-burst').setAlpha(0).setScale(0.5).setDepth(100);
     this.game.canvas.dataset.heroLayers = '1';
 
