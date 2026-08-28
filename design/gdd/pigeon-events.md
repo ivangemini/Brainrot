@@ -1,7 +1,7 @@
 # Pigeon Events
 
-> **Status**: Designed v0.1
-> **Last Updated**: 2026-08-27
+> **Status**: Implemented v0.1
+> **Last Updated**: 2026-08-28
 > **Priority**: MVP Feature
 > **Initial content**: Bread Rush + Pigeon Drop
 
@@ -11,6 +11,8 @@ Pigeon Events are short 20–45 second arcade bursts that periodically interrupt
 
 Events are not a second full game mode. They must be understandable within seconds and return the player to the main progression loop quickly.
 
+The first commercial-MVP event set is now implemented as two distinct one-input activities: Bread Rush and Pigeon Drop.
+
 ## 2. Player Fantasy
 
 The player briefly uses their absurdly upgraded pigeon instead of only upgrading it. Events should feel like small consequences of being a city pigeon — grabbing food, dropping something on targets, escaping chaos — while providing a competence moment inside an otherwise progression-driven game.
@@ -18,27 +20,31 @@ The player briefly uses their absurdly upgraded pigeon instead of only upgrading
 ## 3. Detailed Rules
 
 ### Event eligibility
-- First event system introduction around Growth Stage / Total Level defined by progression tuning (~90 target in v0.1).
-- After introduction, events become periodically available based on active play and cooldown/trigger data.
-- Event invitation never interrupts a Growth ceremony, mutation choice, ad or another modal.
-- Player may defer an event; it remains available for a bounded window or until next trigger policy.
+- Bread Rush unlocks at Total Upgrade Level 90.
+- Pigeon Drop unlocks at Total Upgrade Level 180, deliberately after the first Mutation choice at 150 and before the Building Pigeon Growth beat at 240.
+- Event invitation never interrupts a Growth ceremony, unresolved mutation choice, ad or another active event.
+- A shared 5-minute active-play cooldown prevents event clumping after a completed run.
+- Each event also retains its own cooldown (Bread Rush 6 minutes, Pigeon Drop 7 minutes in v0.1).
+- When both events are available, the coordinator alternates away from the last completed event. With no event history after Pigeon Drop unlock, Pigeon Drop is surfaced first so the post-Mutation loop exposes the new content beat.
 
 ### Common event lifecycle
-`available -> intro -> countdown -> active -> result -> rewardClaimed -> return`
+`available -> countdown -> active -> result -> rewardClaimed -> return`
 
 During `active`:
 - normal main-scene Feather tap transactions are paused;
-- event timer uses ActiveGameplayClock;
-- external ad/background pauses timer;
-- event has one primary input rule.
+- event timer uses the authoritative ActiveGameplayClock;
+- external ad/background pauses timer through the existing gameplay lifecycle;
+- event has one primary pointer/touch rule;
+- only one Pigeon Event can own the runtime event slot at a time.
 
 ### Reward model
 Every event has:
-- guaranteed participation/completion reward unless abandoned under a clearly defined rule;
+- a bounded economy-scaled completion reward;
 - score-performance multiplier with bounded min/max;
-- optional rewarded ×2 on result after base reward is secured.
+- optional rewarded ×2 on result after the base reward is already secured;
+- duplicate-safe transaction IDs so repeated completion/ad callbacks cannot grant twice.
 
-Event rewards must accelerate progression without making normal upgrades economically irrelevant.
+Both events share the same event-economy reference pipeline. The reference snapshot is mutation-aware and includes representative active tap value, expected crit contribution and passive income. Chaos then applies its explicit Pigeon Event reward modifier separately.
 
 ### Event 1 — Bread Rush
 
@@ -49,120 +55,140 @@ Collect bread pieces appearing/moving across a compact play field before time ex
 Tap/click bread targets. Pigeon snaps/leans toward the target with exaggerated peck/reach feedback.
 
 #### Duration
-Initial target: 30 seconds.
+30 seconds after a 3-second countdown.
 
 #### Scoring
 - normal bread = 1 point;
-- rare golden bread can appear at low frequency = bonus points, introduced only after basic interaction is clear;
+- rare golden bread = 4 points;
 - miss taps have no punitive currency loss.
 
-Difficulty scaling may adjust spawn interval, movement and target lifetime by Growth Stage, but target size must remain touch-friendly.
+Current v0.1 tuning:
+- target spawn interval: 0.9 s;
+- target lifetime: 2.7 s baseline;
+- golden chance: 8%;
+- expected reward-normalization score: 22.
 
 ### Event 2 — Pigeon Drop
 
 #### Goal
-Time a single-action drop while targets move below. Accuracy/target type creates score.
+Time a single-action drop while a target moves below. Accuracy at impact creates score.
 
 #### Input
-One large tap button / tap field to drop; short reset/reposition between attempts.
+One large `DROP NOW` button or the Phaser play field. After each impact a short reset makes the next attempt immediately legible.
 
 #### Duration
-Initial target: ~25–35 seconds, several attempts.
+30 seconds after a 3-second countdown.
 
-#### Scoring
-- centered hit = highest score;
-- near hit = smaller score;
-- miss = no score for that attempt, quickly reset;
-- no graphic gross-out detail required; use stylized comedic impact/VFX.
+#### Deterministic scoring
+The target moves continuously in normalized coordinates and bounces between its configured field bounds. A requested drop has a fixed 0.48-second travel time; score uses target position at impact, not at input time.
 
-The joke is timing and world reaction, not explicit bodily-fluid rendering.
+Accuracy bands around field center:
+- center distance <= 0.045 -> 5 points;
+- near distance <= 0.10 -> 2 points;
+- graze distance <= 0.16 -> 1 point;
+- otherwise -> 0 points / miss.
+
+Current v0.1 tuning:
+- target field: 0.18–0.82 normalized X;
+- target speed: 0.29 normalized units/sec;
+- post-impact reset: 0.62 s;
+- expected reward-normalization score: 30.
+
+The session model is deterministic with respect to ActiveGameplayClock time. Drop flight and target movement are resolved in sub-slices so scoring does not depend on renderer FPS.
+
+The illustrated treatment is intentionally abstract/comedic. Runtime art uses generated raster target, projectile and impact textures; there is no graphic bodily-fluid rendering.
 
 ### Event frequency
-Target after unlock: roughly one meaningful event opportunity every 5–10 minutes of active play initially, with anti-clumping rules. Exact cadence is tunable and should be tested against whether events refresh or annoy the clicker loop.
+After unlock, completed events start a 5-minute shared anti-clumping cooldown plus the event-specific cooldown. This keeps the initial target around one meaningful event opportunity every 5–10 minutes of active progression without allowing both MVP events to stack back-to-back.
 
 ### Result screen
 Shows:
 - score;
+- personal best;
+- event-specific attempt/performance information;
 - base Feathers reward;
-- personal best if tracked;
 - optional `Watch ad — 2× reward`;
 - Continue.
 
-Base reward is committed/claimable regardless of ad availability.
+Base reward is committed through a unique reward transaction and persisted before the optional rewarded action is offered.
 
 ### Event progression
-MVP events may have lightweight difficulty bands keyed to Growth Stage. Do not add separate permanent event upgrade trees before the main clicker economy is proven.
+MVP events have no separate permanent upgrade tree. Growth/Mutation state follows the player into event presentation and reward reference calculations rather than creating a parallel progression economy.
 
 ## 4. Formulas
 
-### Event reward target
-Reward is tied to current economic pace rather than a fixed Feather number that becomes meaningless.
+### Shared event reference income
+Conceptually:
 
-Define:
-`referenceIncome = smoothed/current production reference from economy snapshot at event start`
+`expectedCritFactor = 1 + critChance * (critMultiplier - 1)`
 
-`baseEventReward = referenceIncome * rewardSeconds`
+`referenceTapIncome = tapPayout(referenceCombo, nonCrit) * referenceTapsPerSecond * expectedCritFactor`
 
-where `rewardSeconds` is a tuning parameter representing how many seconds of normal progression the event should be worth.
+`referenceIncome = max(1, referenceTapIncome + passiveRate)`
 
-Initial target:
-- completion floor approximately 30–60 seconds of ordinary production;
-- strong performance approximately 90–150 seconds;
-- ×2 rewarded doubles the already-calculated base result.
+All component formulas are mutation-aware.
 
-Example conceptual:
-`performanceMult = clamp(0.75 + normalizedScore * 1.25, 0.75, 2.0)`
+### Event reward
+`normalizedScore = min(normalizedScoreCap, score / expectedScore)`
 
-`eventReward = referenceIncome * baseRewardSeconds * performanceMult`
+`performanceMult = min(performanceMax, performanceBase + normalizedScore * performancePerNormalizedScore)`
 
-Exact normalized-score curves are defined per event.
+`baseEventReward = referenceIncome * baseRewardSeconds * performanceMult`
 
-### Bread Rush normalized score
-Use score relative to designed expected band for current difficulty, clamped 0–1.2 before reward mapping so exceptional play has bounded upside.
+`finalEventReward = baseEventReward * explicitEventModifiers`
 
-### Pigeon Drop
-Per attempt points map accuracy bands to deterministic score values; total normalized against expected attempts.
+Current common performance tuning:
+- performance base = 0.75;
+- performance per normalized score = 1.25;
+- max = 2.0;
+- normalized score cap = 1.2.
+
+Bread Rush uses 60 reward-seconds; Pigeon Drop uses 75 reward-seconds.
+
+The rewarded result option adds one additional copy of the already-calculated final base reward through a second unique transaction ID.
 
 ## 5. Edge Cases
 
-- Browser backgrounds: timer pauses; event does not auto-fail in an ad/background state.
-- Player reloads during active event: MVP may abandon event without reward and return safely to main state; never duplicate a pending result reward.
-- Rewarded ad unavailable: Continue remains available and base reward is preserved.
-- Event trigger occurs during Growth/mutation: queue availability, do not interrupt.
-- Very large economy values: event reward calculation uses same large-number type/formatter rules as main economy.
-- Low-end device: target spawn/VFX count reduces; gameplay target timing remains equivalent.
-- Orientation change: field reflows; active targets preserve normalized positions or are regenerated fairly.
-- Touch target overlaps sticky ad-safe area: layout bounds exclude reserved portal region.
+- Browser backgrounds/ad overlays: ActiveGameplayClock stops; event timer and deterministic motion do not advance.
+- Player reloads during active event: MVP abandons the transient session and returns safely to main state; no result transaction exists until completion.
+- Duplicate `finishRun` callback: base transaction applies once; runs/best/cooldowns persist once.
+- Duplicate rewarded callback: reward ledger prevents a second bonus grant.
+- Rewarded ad unavailable/closed: Continue remains available and base reward remains committed.
+- Event becomes eligible during unresolved Mutation: availability remains suppressed until Mutation is selected.
+- Both events become ready simultaneously: deterministic coordinator uses last-event history to choose one invitation.
+- Old schema-v1 save contains only Bread Rush fields: Pigeon Drop/shared fields sanitize to zero/null without invalidating the save.
+- Malformed event progress: negative/NaN values sanitize safely; invalid event ID becomes null.
+- Orientation change: Pigeon Drop target positions remain normalized and presentation reflows around the authoritative session state.
+- Touch target/ad-safe layout: large Pigeon Drop action remains inside the gameplay region and has dedicated compact portrait treatment.
 
 ## 6. Dependencies
 
 Upstream:
-- Game State / Clock;
+- Game State / ActiveGameplayClock;
 - Progression Economy;
-- Tuning Data;
-- Save for best scores/pending reward safety;
-- Platform Monetization for result rewarded ad.
+- Mutation modifiers;
+- Save/reward ledger;
+- Platform Monetization.
 
 Presentation:
-- Phaser rendering;
-- Main UI/result DOM overlay;
-- VFX/Audio.
+- Phaser scenes inherit current Growth art and Mutation treatment;
+- DOM HUD/result overlays;
+- generated raster event assets.
 
 Downstream:
-- Collection may use event achievements/discoveries;
-- Analytics measures participation/score/reward/ad engagement.
+- Collection/event achievements may consume best scores later;
+- analytics can consume event availability, participation, score and reward transactions without changing event rules.
 
 ## 7. Tuning Knobs
 
 Common:
-- unlock threshold;
-- event cooldown/opportunity frequency;
-- event duration;
+- unlock thresholds;
+- shared cooldown;
+- per-event cooldown;
+- duration/countdown;
 - rewardSeconds;
-- performance curve;
-- maximum reward multiplier;
-- intro countdown duration;
-- difficulty band by Growth Stage.
+- performance curve/cap;
+- event alternation policy.
 
 Bread Rush:
 - spawn interval;
@@ -171,21 +197,36 @@ Bread Rush:
 - golden bread frequency/value.
 
 Pigeon Drop:
-- target speed;
+- target range/speed;
+- drop travel time;
 - attempt reset time;
 - accuracy band widths;
 - score per band;
-- target mix.
+- expected score.
 
-## 8. Acceptance Criteria
+## 8. Implementation Notes — 2026-08-28
 
-- [ ] Each initial event can be understood and played with one primary pointer/touch interaction.
-- [ ] Typical event duration remains under 45 seconds.
-- [ ] Background/ad pause cannot consume event timer.
-- [ ] Base result reward is preserved when rewarded ad fails/is declined.
-- [ ] Rewarded ×2 applies exactly once.
-- [ ] Event rewards scale with economy snapshot and remain useful across multiple Growth Stages.
-- [ ] Main clicker production does not continue double-running during an active event unless explicitly defined in future tuning.
-- [ ] Portrait and landscape layouts keep all targets outside ad-safe regions.
-- [ ] Event result is a valid natural-break state for platform ad policy; no ad is requested during the active timer.
-- [ ] Both MVP events run with acceptable target visibility/touch sizes on representative phone viewport.
+- `src/domain/event-economy.ts` is the common reward/reference pipeline for both MVP events.
+- `src/domain/pigeon-drop.ts` owns the deterministic Pigeon Drop session and scoring state.
+- `src/events/event-availability.ts` owns deterministic event opportunity selection/alternation.
+- `GameStore` owns per-event progress plus shared anti-clumping cooldown state.
+- `PigeonDropService` mirrors Bread Rush transaction safety and immediate result persistence.
+- `PigeonDropScene` inherits the current Growth raster scene and selected Mutation instead of reverting to an early-game visual state.
+- Pigeon Drop player-facing illustration is generated at build time by `tools/art/generate-pigeon-drop-assets.mjs`; the production runtime remains raster-only.
+- Browser Visual QA has deterministic seeds for Bread Rush and Pigeon Drop separately so event alternation cannot make a regression test flaky.
+
+## 9. Acceptance Criteria
+
+- [x] Both initial events can be understood and played with one primary pointer/touch interaction.
+- [x] Typical event duration remains under 45 seconds.
+- [x] Background/ad pause cannot consume event timer because both scenes advance only from ActiveGameplayClock.
+- [x] Base result reward is preserved when rewarded ad fails/is declined.
+- [x] Rewarded ×2 uses a unique reward transaction and applies exactly once.
+- [x] Event rewards scale with economy snapshot and remain mutation-aware across Growth Stages.
+- [x] Main clicker production does not double-run during an active event.
+- [x] Event invitations cannot overlap another event or an unresolved Mutation decision.
+- [x] Shared cooldown/alternation prevents Bread Rush and Pigeon Drop from clumping back-to-back.
+- [x] Pigeon Drop scoring is deterministic across renderer frame granularity.
+- [x] Schema-v1 Bread Rush-only saves load with safe Pigeon Drop defaults.
+- [x] Event result is a natural-break state; no ad is requested during the active timer.
+- [x] Both MVP events are covered by representative desktop browser QA; Pigeon Drop additionally has compact portrait browser QA.
