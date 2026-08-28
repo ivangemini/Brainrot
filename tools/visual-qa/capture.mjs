@@ -32,6 +32,33 @@ async function assertHeroContract(page, label) {
   if (result.layers !== '1') issues.push(`${label}: meme pigeon is rendered more than once`);
 }
 
+async function assertDesktopFooter(page, label, eventMode = false) {
+  const footer = await page.locator('#game-ui').evaluate((root) => {
+    const style = getComputedStyle(root, '::before');
+    return {
+      height: Number.parseFloat(style.height),
+      bottom: Number.parseFloat(style.bottom),
+      content: style.content,
+    };
+  });
+  if (!Number.isFinite(footer.height) || footer.height < 70 || footer.height > 92) {
+    issues.push(`${label}: desktop interaction footer is missing or has invalid height (${footer.height})`);
+  }
+  if (!Number.isFinite(footer.bottom) || footer.bottom < 8) {
+    issues.push(`${label}: desktop interaction footer is not inside the viewport`);
+  }
+  if (eventMode && !footer.content.includes('BREAD RUSH')) {
+    issues.push(`${label}: Bread Rush footer did not switch to event copy`);
+  }
+
+  if (!eventMode) {
+    const hintBox = await page.locator('#tap-hint').boundingBox();
+    if (!hintBox || hintBox.y < 800 || hintBox.y + hintBox.height > 892) {
+      issues.push(`${label}: TAP THE PIGEON CTA is not contained in the desktop footer`);
+    }
+  }
+}
+
 async function openPage(viewport, label) {
   const page = await browser.newPage({ viewport });
   attachIssueListeners(page, label);
@@ -42,6 +69,7 @@ async function openPage(viewport, label) {
 }
 
 const desktop = await openPage({ width: 1440, height: 900 }, 'desktop');
+await assertDesktopFooter(desktop, 'desktop');
 await desktop.screenshot({ path: `${outputDir}/desktop-main.png`, fullPage: true });
 await desktop.close();
 
@@ -78,6 +106,7 @@ await eventPage.click('.bread-rush-offer');
 await eventPage.waitForSelector('.bread-rush-hud:not([hidden])');
 await eventPage.waitForTimeout(3600);
 await assertHeroContract(eventPage, 'bread-rush');
+await assertDesktopFooter(eventPage, 'bread-rush', true);
 
 const timeText = await eventPage.locator('.bread-rush-time strong').textContent();
 const timeRemaining = Number(timeText);
