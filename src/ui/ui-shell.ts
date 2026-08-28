@@ -1,3 +1,4 @@
+import { BREAD_RUSH } from '../content/event-content';
 import {
   UPGRADE_DEFINITIONS,
   UPGRADE_ORDER,
@@ -64,6 +65,23 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
       <span>Earn Feathers. Make bad decisions.</span>
     </div>
 
+    <aside class="scene-rail glass-panel" aria-label="Bread Rush progression">
+      <div class="scene-rail__heading">
+        <img src="/assets/generated/bread_target.png" alt="" />
+        <div>
+          <span class="eyebrow">NEXT CHAOS</span>
+          <strong>BREAD RUSH</strong>
+        </div>
+      </div>
+      <p id="bread-rush-rail-status">Unlock at Total Lv ${BREAD_RUSH.unlockTotalLevel}</p>
+      <div class="scene-rail__track"><div id="bread-rush-rail-fill"></div></div>
+      <div class="scene-rail__meta">
+        <span id="bread-rush-rail-progress">0 / ${BREAD_RUSH.unlockTotalLevel}</span>
+        <span id="bread-rush-rail-best">Best 0</span>
+      </div>
+      <small>30 seconds. Catch bread. Get paid.</small>
+    </aside>
+
     <aside class="upgrade-panel glass-panel" aria-label="Pigeon upgrades">
       <div class="upgrade-heading">
         <div>
@@ -93,6 +111,10 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
   const totalLevel = mustElement(root, '#total-level');
   const upgradeList = mustElement(root, '#upgrade-list');
   const tapHint = mustElement(root, '#tap-hint');
+  const breadRushRailStatus = mustElement(root, '#bread-rush-rail-status');
+  const breadRushRailFill = mustElement(root, '#bread-rush-rail-fill');
+  const breadRushRailProgress = mustElement(root, '#bread-rush-rail-progress');
+  const breadRushRailBest = mustElement(root, '#bread-rush-rail-best');
   const rewardHost = mustElement(root, '#reward-host');
   const toastHost = mustElement(root, '#toast-host');
 
@@ -113,6 +135,16 @@ export function createUiShell(root: HTMLElement, store: GameStore): UiShell {
     growthStage.textContent = currentStage.name.toUpperCase();
     comboValue.textContent = `x${comboMultiplier.toFixed(2)}`;
     comboFill.style.width = `${Math.round(state.comboCharge * 100)}%`;
+
+    const breadRushProgress = Math.min(1, total / BREAD_RUSH.unlockTotalLevel);
+    breadRushRailFill.style.width = `${Math.round(breadRushProgress * 100)}%`;
+    breadRushRailProgress.textContent = `${Math.min(total, BREAD_RUSH.unlockTotalLevel)} / ${BREAD_RUSH.unlockTotalLevel}`;
+    breadRushRailBest.textContent = `Best ${state.events.breadRushBestScore}`;
+    breadRushRailStatus.textContent = total < BREAD_RUSH.unlockTotalLevel
+      ? `Unlock at Total Lv ${BREAD_RUSH.unlockTotalLevel}`
+      : state.events.breadRushCooldownSeconds > 0
+        ? `Cooldown ${formatDuration(state.events.breadRushCooldownSeconds)}`
+        : 'READY — event card is live';
 
     if (nextStage) {
       const span = nextStage.threshold - currentStage.threshold;
