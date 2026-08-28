@@ -9,12 +9,6 @@ import {
 import { getGrowthStage, getTotalUpgradeLevel } from '../domain/economy-formulas';
 import type { GameStore } from '../domain/game-store';
 
-const TARGET_TEXTURE = 'pigeon-drop-target';
-const TARGET_PATH = '/assets/generated/pigeon_drop_target.png';
-const PROJECTILE_TEXTURE = 'pigeon-drop-projectile';
-const PROJECTILE_PATH = '/assets/generated/pigeon_drop_projectile.png';
-const IMPACT_TEXTURE = 'pigeon-drop-impact';
-const IMPACT_PATH = '/assets/generated/pigeon_drop_impact.png';
 const MUTATION_TEXTURE_PREFIX = 'generated-mutation-';
 
 export interface PigeonDropSceneCallbacks {
@@ -22,18 +16,25 @@ export interface PigeonDropSceneCallbacks {
   readonly onComplete: (snapshot: PigeonDropSnapshot) => void;
 }
 
+/**
+ * Pigeon Drop reuses the generated Growth raster scene as its production art.
+ * Bullseye/drop/impact objects below are transient interaction VFX only; they
+ * deliberately do not masquerade as production character or environment art.
+ */
 export class PigeonDropScene extends Phaser.Scene {
   private session: PigeonDropSession | undefined;
   private callbacks: PigeonDropSceneCallbacks | undefined;
   private hero: Phaser.GameObjects.Image | undefined;
   private mutationLayer: Phaser.GameObjects.Image | undefined;
-  private target: Phaser.GameObjects.Image | undefined;
-  private projectile: Phaser.GameObjects.Image | undefined;
+  private targetMarker: Phaser.GameObjects.Container | undefined;
+  private projectile: Phaser.GameObjects.Container | undefined;
+  private aimGuide: Phaser.GameObjects.Rectangle | undefined;
   private heroBaseScale = 1;
   private mutationBaseScale = 1;
   private completedSignaled = false;
   private renderedImpactSequence = 0;
   private readonly onResize = (): void => this.layout();
+  private readonly onPointerDown = (): void => { this.requestDrop(); };
 
   public constructor(
     private readonly store: GameStore,
@@ -57,9 +58,6 @@ export class PigeonDropScene extends Phaser.Scene {
       const mutationKey = `${MUTATION_TEXTURE_PREFIX}${mutationId}`;
       if (!this.textures.exists(mutationKey)) this.load.image(mutationKey, MUTATION_DEFINITIONS[mutationId].art);
     }
-    if (!this.textures.exists(TARGET_TEXTURE)) this.load.image(TARGET_TEXTURE, TARGET_PATH);
-    if (!this.textures.exists(PROJECTILE_TEXTURE)) this.load.image(PROJECTILE_TEXTURE, PROJECTILE_PATH);
-    if (!this.textures.exists(IMPACT_TEXTURE)) this.load.image(IMPACT_TEXTURE, IMPACT_PATH);
   }
 
   public create(): void {
@@ -85,19 +83,24 @@ export class PigeonDropScene extends Phaser.Scene {
         .setDepth(2);
     }
 
-    this.target = this.add.image(0, 0, TARGET_TEXTURE).setDepth(30);
-    this.projectile = this.add.image(0, 0, PROJECTILE_TEXTURE).setDepth(55).setVisible(false);
+    this.aimGuide = this.add.rectangle(0, 0, 3, 260, 0xf2c84b, 0.42)
+      .setOrigin(0.5, 1)
+      .setDepth(20);
+    this.targetMarker = this.createTargetMarker();
+    this.projectile = this.createProjectile().setVisible(false);
 
-    this.input.on('pointerdown', () => this.requestDrop());
+    this.input.on('pointerdown', this.onPointerDown);
     this.scale.on('resize', this.onResize);
     this.events.once('shutdown', () => {
+      this.input.off('pointerdown', this.onPointerDown);
       this.scale.off('resize', this.onResize);
       this.session = undefined;
       this.callbacks = undefined;
       this.hero = undefined;
       this.mutationLayer = undefined;
-      this.target = undefined;
+      this.targetMarker = undefined;
       this.projectile = undefined;
+      this.aimGuide = undefined;
     });
 
     this.layout();
@@ -129,6 +132,28 @@ export class PigeonDropScene extends Phaser.Scene {
     }
   }
 
+  private createTargetMarker(): Phaser.GameObjects.Container {
+    const shadow = this.add.ellipse(0, 10, 248, 82, 0x071b23, 0.42);
+    const outer = this.add.ellipse(0, 0, 238, 76, 0x66c7e8, 0.12)
+      .setStrokeStyle(5, 0x66c7e8, 0.82);
+    const middle = this.add.ellipse(0, 0, 154, 50, 0xf5f1e8, 0.07)
+      .setStrokeStyle(4, 0xf5f1e8, 0.66);
+    const center = this.add.ellipse(0, 0, 66, 24, 0xf2c84b, 0.72)
+      .setStrokeStyle(3, 0xffe58f, 0.95);
+    const vertical = this.add.rectangle(0, 0, 4, 96, 0xf2c84b, 0.76);
+    const horizontal = this.add.rectangle(0, 0, 276, 3, 0xf2c84b, 0.48);
+    return this.add.container(0, 0, [shadow, outer, middle, center, vertical, horizontal]).setDepth(30);
+  }
+
+  private createProjectile(): Phaser.GameObjects.Container {
+    const glow = this.add.ellipse(0, 2, 52, 68, 0xf5f1e8, 0.16);
+    const body = this.add.ellipse(0, 0, 30, 42, 0xf5f1e8, 0.96)
+      .setStrokeStyle(3, 0xffffff, 0.78);
+    const highlight = this.add.ellipse(-5, -7, 8, 13, 0xffffff, 0.78);
+    const tail = this.add.ellipse(0, -23, 12, 24, 0xf5f1e8, 0.72);
+    return this.add.container(0, 0, [glow, tail, body, highlight]).setDepth(55);
+  }
+
   private layout(): void {
     const width = this.scale.width;
     const height = this.scale.height;
@@ -146,30 +171,38 @@ export class PigeonDropScene extends Phaser.Scene {
         .setScale(this.mutationBaseScale)
         .setAlpha(Math.min(0.48, visual.mutationAlpha * 0.56));
     }
+
+    const targetY = this.getTargetPosition(0.5).y;
+    const dropX = this.getDropX();
+    this.aimGuide
+      ?.setPosition(dropX, targetY - 8)
+      .setSize(3, Math.max(170, targetY - height * 0.18));
+
     const snapshot = this.session?.getSnapshot();
     if (snapshot) this.syncPresentation(snapshot);
   }
 
   private syncPresentation(snapshot: PigeonDropSnapshot): void {
     const targetPosition = this.getTargetPosition(snapshot.targetX);
-    const targetWidth = Math.max(155, Math.min(270, this.scale.width * 0.2));
-    this.target
+    const targetScale = Math.max(0.68, Math.min(1.06, this.scale.width / 1050));
+    this.targetMarker
       ?.setPosition(targetPosition.x, targetPosition.y)
-      .setDisplaySize(targetWidth, targetWidth)
-      .setAngle(snapshot.targetDirection > 0 ? 1.5 : -1.5);
+      .setScale(targetScale)
+      .setRotation(snapshot.targetDirection * 0.012);
 
     if (snapshot.dropProgress === null) {
       this.projectile?.setVisible(false);
     } else if (this.projectile) {
       const dropX = this.getDropX();
-      const startY = this.scale.height * 0.13;
-      const endY = targetPosition.y - targetWidth * 0.06;
+      const startY = this.scale.height * 0.15;
+      const endY = targetPosition.y - 4;
       const eased = snapshot.dropProgress * snapshot.dropProgress;
+      const scale = 0.78 + snapshot.dropProgress * 0.5;
       this.projectile
         .setVisible(true)
         .setPosition(dropX, startY + (endY - startY) * eased)
-        .setDisplaySize(58 + 28 * snapshot.dropProgress, 58 + 28 * snapshot.dropProgress)
-        .setAngle(snapshot.dropProgress * 26);
+        .setScale(scale)
+        .setRotation(snapshot.dropProgress * 0.55);
     }
 
     const impact = snapshot.lastImpact;
@@ -182,37 +215,49 @@ export class PigeonDropScene extends Phaser.Scene {
   private playImpact(points: number, accuracy: PigeonDropAccuracy): void {
     const x = this.getDropX();
     const y = this.getTargetPosition(0.5).y;
-    const impact = this.add.image(x, y, IMPACT_TEXTURE)
+    const perfect = accuracy === 'center';
+    const hit = points > 0;
+    const mainColor = perfect ? 0xf2c84b : hit ? 0xf5f1e8 : 0xf36a62;
+
+    const ringOuter = this.add.ellipse(0, 0, 180, 62, mainColor, 0.08)
+      .setStrokeStyle(perfect ? 8 : 5, mainColor, 0.92);
+    const ringInner = this.add.ellipse(0, 0, 92, 34, 0xf5f1e8, hit ? 0.44 : 0.08);
+    const splashA = this.add.rectangle(-56, -8, 58, perfect ? 8 : 5, mainColor, 0.82).setAngle(-18);
+    const splashB = this.add.rectangle(54, -10, 58, perfect ? 8 : 5, mainColor, 0.82).setAngle(20);
+    const splashC = this.add.rectangle(-28, -34, 48, perfect ? 7 : 4, mainColor, 0.68).setAngle(64);
+    const splashD = this.add.rectangle(32, -32, 48, perfect ? 7 : 4, mainColor, 0.68).setAngle(-62);
+    const burst = this.add.container(x, y, [ringOuter, ringInner, splashA, splashB, splashC, splashD])
       .setDepth(70)
-      .setScale(0.28)
-      .setAlpha(0.96);
+      .setScale(0.62)
+      .setAlpha(0.98);
+
     this.tweens.add({
-      targets: impact,
-      scale: points >= 5 ? 0.72 : points > 0 ? 0.56 : 0.42,
+      targets: burst,
+      scale: perfect ? 1.35 : hit ? 1.08 : 0.92,
       alpha: 0,
-      duration: 360,
+      duration: perfect ? 470 : 360,
       ease: 'Quad.Out',
-      onComplete: () => impact.destroy(),
+      onComplete: () => burst.destroy(true),
     });
 
-    const label = points >= 5 ? 'PERFECT +5' : points > 0 ? `${accuracy.toUpperCase()} +${points}` : 'MISS';
-    const text = this.add.text(x, y - 48, label, {
+    const label = perfect ? 'PERFECT +5' : hit ? `${accuracy.toUpperCase()} +${points}` : 'MISS';
+    const text = this.add.text(x, y - 52, label, {
       fontFamily: 'system-ui, sans-serif',
-      fontSize: points >= 5 ? '34px' : '25px',
+      fontSize: perfect ? '34px' : '25px',
       fontStyle: 'bold',
-      color: points >= 5 ? '#f2c84b' : points > 0 ? '#f5f1e8' : '#f36a62',
+      color: perfect ? '#f2c84b' : hit ? '#f5f1e8' : '#f36a62',
       stroke: '#17191e',
       strokeThickness: 7,
     }).setOrigin(0.5).setDepth(85);
     this.tweens.add({
       targets: text,
-      y: y - 116,
+      y: y - 118,
       alpha: 0,
       duration: 560,
       ease: 'Cubic.Out',
       onComplete: () => text.destroy(),
     });
-    this.cameras.main.shake(points >= 5 ? 130 : points > 0 ? 80 : 35, points >= 5 ? 0.0018 : 0.0008);
+    this.cameras.main.shake(perfect ? 130 : hit ? 80 : 35, perfect ? 0.0018 : 0.0008);
   }
 
   private getDropX(): number {
