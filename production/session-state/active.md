@@ -1,114 +1,71 @@
 # Active Session — Pigeon Drop v1
 
 > Updated: 2026-08-28
-> Working branch: `codex/pigeon-drop-v1`
-> Task: Complete the next roadmap item after Growth Art Stages v1 — add the second MVP Pigeon Event as a meaningful post-Mutation content beat, with deterministic gameplay, economy-scaled rewards, persistence, responsive presentation and browser QA.
+> Status: **COMPLETE / MERGED TO MAIN**
+> Runtime merge: `5c62c60f36615cc89f65449d95ee08f49c751478`
+> Source branch: `codex/pigeon-drop-v1`
 
 ## Completed
 
-- Preserved the existing clicker, Growth, Mutation, Bread Rush, save/offline and monetization systems.
 - Implemented **Pigeon Drop** as the second MVP Pigeon Event:
-  - unlock at Total Upgrade Level 180, after first Mutation at 150 and before Growth Stage 6 at 240;
+  - unlock at Total Upgrade Level 180;
   - 3-second countdown + 30-second active run;
   - one primary pointer/touch action;
-  - target position locks when a drop is accepted so click timing remains authoritative during the fixed 0.48-second visible flight;
-  - deterministic center / near / graze / miss scoring at impact;
-  - short attempt reset and no Feather penalty on misses.
-- Added `src/domain/pigeon-drop.ts` as a deterministic, frame-rate-independent session model driven only by active gameplay time.
-- Added `src/domain/event-economy.ts` and moved both Bread Rush and Pigeon Drop onto the same mutation-aware reference-income / bounded reward pipeline.
-- Added `PigeonDropService` using the existing idempotent reward ledger:
-  - base result reward is applied once and persisted before optional rewarded doubling;
-  - repeated completion callbacks cannot duplicate reward, run count or cooldown state;
-  - rewarded bonus has a separate transaction ID;
-  - Chaos event multiplier remains authoritative and applies to both events.
-- Extended additive schema-v1 event progress with:
-  - Pigeon Drop best score / runs / cooldown;
-  - shared Pigeon Event cooldown;
-  - last completed event ID.
-- Old schema-v1 saves containing only Bread Rush event fields load with safe default Pigeon Drop/shared fields; no save reset or schema bump is required.
-- Added deterministic event opportunity selection in `src/events/event-availability.ts`:
-  - shared 5-minute anti-clumping cooldown after either event;
+  - target position locks when a drop is accepted so click timing is authoritative during the 0.48-second visible flight;
+  - deterministic center / near / graze / miss scoring;
+  - short reset between attempts and no Feather penalty for misses.
+- Added deterministic `PigeonDropSession` driven by the authoritative active-gameplay clock.
+- Added shared event-economy reference/reward calculations for Bread Rush and Pigeon Drop.
+- Added duplicate-safe Pigeon Drop base reward and optional rewarded ×2 transaction flow.
+- Extended schema-v1 event state with Pigeon Drop best/runs/cooldown, shared event cooldown and last-event rotation state while preserving old Bread Rush-only saves.
+- Added deterministic two-event arbitration:
+  - 5-minute shared anti-clumping cooldown;
   - Bread Rush own cooldown remains 6 minutes;
   - Pigeon Drop own cooldown is 7 minutes;
-  - when both are ready, offer the event opposite `lastEventId`;
-  - with no event history after Lv 180, surface Pigeon Drop first.
-- Integrated the two-event coordinator in `src/main.ts`:
-  - only one event can own the runtime event slot;
-  - normal clicker production remains paused during active event play;
-  - event offers stay suppressed during unresolved Mutation choice;
-  - return from either event safely wakes MainScene and resets simulation timing.
-- Added responsive Pigeon Drop UI and Phaser presentation:
-  - current generated Growth raster environment and Mutation treatment remain the production-art layer;
-  - large `DROP NOW` action plus playfield tap input;
-  - score / attempts / time HUD;
-  - moving bullseye, aim guide, falling marker, impact burst and score text are transient Phaser interaction/VFX primitives only;
-  - result card with score, best, attempts, average points, secured reward and optional rewarded ×2.
-- Removed the obsolete shape-generated Pigeon Drop target/projectile/impact texture pipeline:
-  - deleted `tools/art/generate-pigeon-drop-assets.mjs`;
-  - removed it from `npm run art:generate`;
-  - removed the Pigeon Drop offer's dependency on its generated target PNG and reused the existing raster hero asset instead;
-  - production raster-only/no-SVG guard remains unchanged.
-- Added tests for:
-  - deterministic center hit and miss resolution;
-  - target-lock / flight / reset timing and completion;
-  - reward bounds and economy scaling;
-  - Business/Mutation-aware reference income;
-  - base reward idempotency;
-  - event alternation and shared/per-event cooldown semantics;
-  - schema-v1 two-event round trip and old Bread Rush-only save migration;
-  - malformed event progress sanitization.
-- Expanded browser Visual QA so Bread Rush and Pigeon Drop are seeded independently instead of relying on whichever offer the rotation chooses.
-- Pigeon Drop browser QA covers:
-  - desktop ready state;
-  - desktop active state and a resolved live attempt;
-  - full 30-second result flow;
-  - localStorage assertion for exactly one run increment, `lastEventId`, shared cooldown and base reward transaction;
-  - compact 390x844 portrait active state;
-  - existing Growth, Bread Rush and Mutation regression captures remain in the same workflow.
-- Updated `design/gdd/pigeon-events.md` to implemented v0.2 with shipped tuning, click-authoritative target lock, transient-VFX art policy, shared event economy, rotation/cooldown contract and save/reward safety.
+  - when both are ready, the offer alternates away from the last completed event.
+- Integrated both events into one authoritative runtime event slot; clicker production remains paused while an event is active and Mutation choice keeps priority.
+- Added responsive Pigeon Drop desktop/mobile HUD, action, result flow and Growth/Mutation presentation carry-through.
+- Removed the rejected Paint-like Pigeon Drop production texture path:
+  - deleted the obsolete shape-generated event asset generator;
+  - removed its build dependency;
+  - removed the offer dependency on its generated target PNG;
+  - moving bullseye, aim guide, falling marker and impact feedback are transient Phaser VFX only;
+  - generated Growth/Mutation raster art remains the production visual layer.
+- Fixed timing fairness: the moving target freezes for the accepted drop flight, so the result reflects the player's click moment rather than drifting during travel.
+- Added unit/save/event-rotation coverage and expanded Chromium Visual QA with deterministic Bread Rush/Pigeon Drop seeds, desktop result persistence and 390×844 portrait capture.
+- Updated `design/gdd/pigeon-events.md` to the shipped two-event contract.
 
-## Verification Evidence
+## Final Verification
 
-Final gameplay/art presentation HEAD before housekeeping: `34a38462d511ac5cf906415c03a0e846da9c55d1`.
+Branch head before merge: `0d84f19bbab433f19e5d00507051717b9de0c14a`.
 
-- CI run `33147842237`: PASS.
-  - generated raster art pipeline: PASS;
-  - raster-only / no-SVG production-art gate: PASS;
-  - Mutation balance profile guard: PASS;
-  - Vitest including Pigeon Drop/event rotation/save migration coverage: PASS;
-  - strict TypeScript + Vite production build: PASS.
-- Browser Visual QA run `33147838985`: PASS.
-  - production build / preview: PASS;
-  - Bread Rush regression clock path: PASS;
-  - Pigeon Drop desktop offer -> active -> resolved attempt -> result: PASS;
-  - Pigeon Drop result persistence assertions: PASS;
-  - Pigeon Drop compact portrait capture: PASS;
-  - Growth Stage 4–8 render uniqueness regression: PASS;
-  - Mutation desktop/mobile regression and persistence: PASS.
-- Manual review of the `34a3846...` Visual QA artifact: PASS.
-  - transient precision marker reads more cleanly than the discarded shape-generated target texture;
-  - desktop and portrait layouts keep target, fixed aim lane and action hierarchy legible;
-  - production Growth/Mutation raster identity remains intact behind the event VFX;
-  - HUD label correctly says `ATTEMPTS`.
-
-Final housekeeping removes the obsolete generator/build dependency and stale offer-image dependency. PR #4 may merge only after the resulting branch head passes CI and Visual QA.
+- Branch CI run `33148470960`: **PASS**.
+- Branch Visual QA run `33148470950`: **PASS**.
+- Manual review of the final Visual QA artifact: **PASS**.
+  - the rejected procedural car/target texture is absent;
+  - desktop and portrait precision marker/action hierarchy remain legible;
+  - result screen is readable;
+  - Growth/Mutation raster identity remains behind the event VFX.
+- Merged runtime tree: `0deb402f9e5b384bb31e323552aa8b8ae802bbb3`.
+- Main runtime merge commit: `5c62c60f36615cc89f65449d95ee08f49c751478`.
+- Post-merge main CI run `33148693696`: **PASS**.
+- Post-merge main Visual QA run `33148693701`: **PASS**.
 
 ## Current Runtime Status
 
-- The roadmap's post-Mutation content/event-depth bottleneck is closed for the current MVP scope.
-- Both designed MVP Pigeon Events are implemented: Bread Rush and Pigeon Drop.
-- Pigeon Drop creates a distinct skill/timing beat after the first Mutation instead of letting the post-150 loop collapse back into upgrade purchasing only.
-- Both events share authoritative economy/reward semantics, use safe persisted result transactions, and cannot clump or overlap.
-- Growth and Mutation identity carry through event presentation instead of events reverting the player to an early-game visual state.
-- Pigeon Drop no longer depends on a shape-generated production texture pack; its precision marker and impact feedback are transient runtime VFX.
-- The project is still not release-complete; the next roadmap bottleneck is presentation polish rather than missing MVP event count.
+- Both designed MVP Pigeon Events are implemented: **Bread Rush + Pigeon Drop**.
+- The post-Mutation event-depth gap is closed for the current MVP scope.
+- Event rewards share authoritative, mutation-aware economy semantics and duplicate-safe persistence.
+- Events cannot overlap or clump back-to-back through the shared coordinator/cooldown rules.
+- Pigeon Drop no longer depends on shape-generated production textures.
+- No Pigeon Drop v1 blocker remains.
 
-## Next
+## Next Roadmap Bottleneck
 
-1. Add **audio and stronger game-feel layering** for normal taps, combo tiers, crits, Growth ceremonies, Mutation selection/reveal, Bread Rush and Pigeon Drop.
-2. After audio/game-feel, continue portal/mobile/release-readiness QA and close remaining commercial-MVP polish issues.
-3. Do not add unrelated progression trees, currencies or new game modes before those roadmap items are complete.
+1. **Audio + stronger game-feel layering** for taps, combo tiers, crits, Growth ceremonies, Mutation reveal/selection, Bread Rush and Pigeon Drop.
+2. Then portal/mobile/release-readiness QA and remaining commercial-MVP presentation polish.
+3. Do not add unrelated progression trees, currencies or new game modes before those passes are complete.
 
 ## Blockers
 
-None for continued development. Pigeon Drop v1 and the two-event MVP set are implemented; housekeeping changes are complete and awaiting final branch-head verification/merge.
+None.
